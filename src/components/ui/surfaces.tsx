@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { ZoomableImage } from './Lightbox'
+
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div className={`rounded-lg border border-line-soft bg-card ${className}`}>
@@ -102,7 +104,7 @@ export function Avatar({
 
   if (url) {
     return (
-      <img
+      <ZoomableImage
         src={url}
         alt={`Avatar de ${name}`}
         className={`${sizes[size]} rounded-full border border-line object-cover`}

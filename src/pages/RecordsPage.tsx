@@ -5,6 +5,7 @@ import { useLicenses, useRecords } from '@/hooks/api'
 import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/feedback'
 import { Avatar, Badge, Card, KeyVal, PageHeader, SectionTitle } from '@/components/ui/surfaces'
+import { ZoomableImage } from '@/components/ui/Lightbox'
 
 const DOC_STATUS: Record<string, { label: string; tone: 'accent' | 'warm' | 'danger' | 'neutral' }> = {
   active: { label: 'Activo', tone: 'accent' },
@@ -67,7 +68,7 @@ function LicenseCard({ doc }: { doc: LicenseDoc }) {
     <Card className="p-4">
       <div className="flex items-start gap-3">
         {doc.photoUrl ? (
-          <img
+          <ZoomableImage
             src={doc.photoUrl}
             alt="Foto del documento"
             className="size-14 rounded-md border border-line object-cover"
