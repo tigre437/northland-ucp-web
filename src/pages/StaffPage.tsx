@@ -32,7 +32,8 @@ import { formatDateTime, formatMoney, relativeTime, VEHICLE_STATE_LABEL } from '
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/feedback'
 import { Badge, Card, KeyVal, PageHeader, SectionTitle } from '@/components/ui/surfaces'
 
-type Tab = 'resumen' | 'sanciones' | 'multas' | 'inventario' | 'vehiculos' | 'permisos'
+type Tab = 'resumen' | 'sanciones' | 'multas' | 'inventario' | 'vehiculos'
+type MainTab = 'jugadores' | 'ajustes'
 
 const inputCls =
   'rounded-md border border-line bg-card-hover px-2 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none'
@@ -45,7 +46,9 @@ export function StaffPage() {
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('resumen')
+  const [mainTab, setMainTab] = useState<MainTab>('jugadores')
   const search = useStaffSearch(q, perms.has('players.view'))
+  const canManage = perms.has('roles.manage')
 
   if (me && !me.staff) {
     return (
@@ -64,6 +67,37 @@ export function StaffPage() {
         subtitle="Búsqueda y gestión de jugadores: sanciones, inventario, vehículos y permisos."
       />
 
+      {canManage && (
+        <div className="flex gap-1 border-b border-line-soft" role="tablist">
+          {(
+            [
+              { id: 'jugadores', label: 'Jugadores', icon: Search },
+              { id: 'ajustes', label: 'Ajustes', icon: KeyRound },
+            ] as { id: MainTab; label: string; icon: typeof Search }[]
+          ).map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={mainTab === id}
+              onClick={() => setMainTab(id)}
+              className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+                mainTab === id
+                  ? 'border-accent text-accent-strong'
+                  : 'border-transparent text-ink-dim hover:text-ink'
+              }`}
+            >
+              <Icon size={14} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {mainTab === 'ajustes' && canManage ? (
+        <PermsSection perms={perms} />
+      ) : (
+      <>
       {perms.has('players.view') && (
       <Card className="p-4">
         <label htmlFor="staff-search" className="kicker mb-2 block">
@@ -126,16 +160,17 @@ export function StaffPage() {
 
       {selected ? (
         <PlayerPanel citizenid={selected} tab={tab} onTab={setTab} perms={perms} />
-      ) : !perms.has('roles.manage') ? (
+      ) : (
         <EmptyState
           icon={<ShieldCheck size={30} />}
           title="Selecciona un jugador"
-          description="Busca un personaje para ver su ficha completa, inventario, vehículos y sanciones."
+          description="Elige un personaje de la lista para ver su ficha completa, inventario, vehículos y sanciones."
         />
-      ) : null}
+      )}
 
-      <PermsSection perms={perms} />
       <AuditSection active={perms.has('audit.view')} />
+      </>
+      )}
     </div>
   )
 }
