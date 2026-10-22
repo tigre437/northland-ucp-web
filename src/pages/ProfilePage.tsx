@@ -1,10 +1,10 @@
-import { Link2, LogOut, ShieldCheck } from 'lucide-react'
+import { Gavel, Link2, LogOut, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api'
-import { useCharacters, useMe } from '@/hooks/api'
+import { useCharacters, useMe, useMySanctions } from '@/hooks/api'
 import { formatDateTime } from '@/lib/format'
 import { PageLoader } from '@/components/ui/feedback'
 import { Avatar, Badge, Card, KeyVal, PageHeader, SectionTitle } from '@/components/ui/surfaces'
@@ -12,6 +12,7 @@ import { Avatar, Badge, Card, KeyVal, PageHeader, SectionTitle } from '@/compone
 export function ProfilePage() {
   const { data: me, isLoading } = useMe()
   const characters = useCharacters()
+  const sanctions = useMySanctions(Boolean(me?.link.linked))
   const [loggingOut, setLoggingOut] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -100,6 +101,60 @@ export function ProfilePage() {
             {loggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
           </button>
         </Card>
+
+        {me.link.linked && (
+          <Card className="p-5 lg:col-span-2">
+            <SectionTitle>
+              <span className="inline-flex items-center gap-2">
+                <Gavel size={14} /> Historial de sanciones
+              </span>
+            </SectionTitle>
+            {sanctions.isLoading ? (
+              <p className="text-sm text-ink-faint">Cargando…</p>
+            ) : !sanctions.data?.length ? (
+              <p className="text-sm text-ink-faint">
+                Sin sanciones — tu expediente administrativo está limpio.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {sanctions.data.map((s) => (
+                  <li
+                    key={`${s.type}-${s.id}`}
+                    className="flex flex-wrap items-center gap-2 rounded-md border border-line-soft px-3 py-2 text-sm"
+                  >
+                    <Badge
+                      tone={s.type === 'ban' ? 'danger' : s.type === 'kick' ? 'warm' : 'neutral'}
+                    >
+                      {s.type === 'ban' ? 'Ban' : s.type === 'kick' ? 'Kick' : 'Aviso'}
+                    </Badge>
+                    <span className="min-w-0 flex-1 text-ink">
+                      {s.reason ?? '—'}
+                      {s.characterName && (
+                        <span className="text-ink-faint"> · {s.characterName}</span>
+                      )}
+                      <span className="text-ink-faint">
+                        {s.createdAt && <> · {formatDateTime(s.createdAt)}</>}
+                        {s.type === 'ban' && s.expiresAt != null && (
+                          <> · expira {formatDateTime(new Date(s.expiresAt * 1000).toISOString())}</>
+                        )}
+                      </span>
+                    </span>
+                    {s.type === 'ban' && (
+                      <Badge tone={s.active ? 'danger' : 'neutral'}>
+                        {s.active ? (s.expiresAt ? 'Activo' : 'Permanente') : 'Expirado/Revocado'}
+                      </Badge>
+                    )}
+                    {s.type !== 'ban' && (
+                      <Badge tone={s.pending ? 'warm' : 'neutral'}>
+                        {s.pending ? 'Pendiente' : s.result === 'offline' ? 'Offline' : 'Ejecutado'}
+                      </Badge>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        )}
       </div>
     </div>
   )

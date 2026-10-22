@@ -248,6 +248,10 @@ export class HttpApi implements UcpApi {
     await this.request(`/staff/roles/${encodeURIComponent(roleId)}`, { method: 'DELETE' })
   }
 
+  mySanctions(): Promise<SanctionEntry[]> {
+    return this.request<SanctionEntry[]>('/account/sanctions')
+  }
+
   async logout(): Promise<void> {
     await this.request<void>('/auth/logout', { method: 'POST' })
     this.csrfToken = null

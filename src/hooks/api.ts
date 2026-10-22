@@ -117,6 +117,15 @@ export function useStaffSanctions(citizenid: string | null) {
   })
 }
 
+export function useMySanctions(enabled = true) {
+  return useQuery({
+    queryKey: ['my-sanctions'] as const,
+    queryFn: () => api.mySanctions(),
+    retry: sessionRetry,
+    enabled,
+  })
+}
+
 export function useStaffPenalties(citizenid: string | null) {
   return useQuery({
     queryKey: ['staff-penalties', citizenid] as const,

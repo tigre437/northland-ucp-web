@@ -302,6 +302,11 @@ export class DemoApi implements UcpApi {
     if (i >= 0) demoRoleGrants.splice(i, 1)
   }
 
+  async mySanctions(): Promise<SanctionEntry[]> {
+    await latency()
+    return demoSanctions
+  }
+
   async logout(): Promise<void> {
     await latency()
     this.loggedIn = false

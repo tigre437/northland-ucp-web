@@ -468,6 +468,9 @@ export interface SanctionEntry {
   active: boolean | null
   pending: boolean | null
   result: string | null
+  /** Kick/warn: personaje afectado (historial de cuenta). */
+  citizenid?: string | null
+  characterName?: string | null
 }
 
 /** Catálogo de permisos granulares de staff (sincronizado con ALL_PERMS
@@ -531,6 +534,7 @@ export interface UcpApi {
   staffRoleGrants(): Promise<RoleGrant[]>
   staffSetRoleGrant(roleId: string, grant: { perms: string[]; roleName?: string }): Promise<RoleGrant>
   staffDeleteRoleGrant(roleId: string): Promise<void>
+  mySanctions(): Promise<SanctionEntry[]>
   logout(): Promise<void>
 }
 
