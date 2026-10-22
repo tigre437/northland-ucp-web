@@ -435,6 +435,8 @@ export interface GuildRole {
 
 /** Fila de la matriz rol → permisos de staff. */
 export interface RoleGrant {
+  /** true si el rol está en DISCORD_STAFF_ROLE_ADMIN — siempre todo. */
+  alwaysAll?: boolean
   id: number | null
   roleId: string
   roleName: string | null

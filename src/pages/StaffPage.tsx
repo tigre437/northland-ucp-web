@@ -884,6 +884,8 @@ function PermsSection({ perms }: { perms: Set<string> }) {
     }
   }
 
+  const alwaysAll = new Set((grants.data ?? []).filter((g) => g.alwaysAll).map((g) => g.roleId))
+
   const allRoles = [
     ...(guildRoles.data ?? []).map((r) => ({ roleId: r.id, roleName: r.name })),
     ...(grants.data ?? [])
@@ -912,13 +914,19 @@ function PermsSection({ perms }: { perms: Set<string> }) {
         ) : (
           <div className="space-y-4">
             {allRoles.map(({ roleId, roleName }) => {
-              const current = permsOf(roleId)
-              const isDirty = roleId in dirty
+              const isAdmin = alwaysAll.has(roleId)
+              const current = isAdmin
+                ? new Set(STAFF_PERMS.map((p) => p.id))
+                : permsOf(roleId)
+              const isDirty = !isAdmin && roleId in dirty
               return (
                 <div key={roleId} className="border-b border-line-soft pb-4 last:border-0 last:pb-0">
                   <div className="mb-2 flex items-center gap-2">
                     <span className="text-sm font-medium text-ink">{roleName}</span>
                     <span className="font-mono text-xs text-ink-faint">{roleId}</span>
+                    {isAdmin && (
+                      <Badge tone="accent">Admin · siempre todos los permisos</Badge>
+                    )}
                     {isDirty && (
                       <button
                         type="button"
@@ -935,10 +943,14 @@ function PermsSection({ perms }: { perms: Set<string> }) {
                       <div key={group}>
                         <p className="kicker mb-1">{group}</p>
                         {STAFF_PERMS.filter((p) => p.group === group).map((p) => (
-                          <label key={p.id} className="flex cursor-pointer items-center gap-2 py-0.5 text-sm text-ink-dim">
+                          <label
+                            key={p.id}
+                            className={`flex items-center gap-2 py-0.5 text-sm text-ink-dim ${isAdmin ? 'opacity-60' : 'cursor-pointer'}`}
+                          >
                             <input
                               type="checkbox"
                               checked={current.has(p.id)}
+                              disabled={isAdmin}
                               onChange={() => toggle(roleId, p.id)}
                               className="h-3.5 w-3.5 rounded border-line accent-olive-400"
                             />
