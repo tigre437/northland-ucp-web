@@ -42,6 +42,7 @@ export const demoMe: Me = {
   },
   csrfToken: 'demo',
   staff: true,
+  staffPermissions: ['view', 'sanctions', 'vehicles'],
 }
 
 export const demoCharacters: Character[] = [

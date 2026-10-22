@@ -230,6 +230,8 @@ function SummaryTab({ player: p }: { player: StaffPlayerDetail }) {
 }
 
 function PenaltiesTab({ citizenid }: { citizenid: string }) {
+  const { data: me } = useMe()
+  const canMutate = me?.staffPermissions?.includes('sanctions') ?? false
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useStaffPenalties(citizenid)
   const [form, setForm] = useState({ fine: '500', months: '0', charges: '', job: 'police' })
@@ -276,6 +278,7 @@ function PenaltiesTab({ citizenid }: { citizenid: string }) {
 
   return (
     <div className="space-y-4">
+      {canMutate && (
       <Card className="p-4">
         <SectionTitle>
           <span className="inline-flex items-center gap-2">
@@ -317,6 +320,12 @@ function PenaltiesTab({ citizenid }: { citizenid: string }) {
         </form>
         {error && <p className="mt-2 text-xs text-danger-strong">{error}</p>}
       </Card>
+      )}
+      {!canMutate && (
+        <p className="text-xs text-ink-faint">
+          Tu rol permite ver sanciones, no modificarlas.
+        </p>
+      )}
 
       {isLoading ? (
         <Skeleton className="h-24" />
@@ -340,6 +349,7 @@ function PenaltiesTab({ citizenid }: { citizenid: string }) {
               <span className="text-sm font-medium text-ink">{formatMoney(p.totalFine)}</span>
               {p.totalMonths > 0 && <Badge tone="danger">{p.totalMonths} meses</Badge>}
               <Badge tone={p.payed ? 'accent' : 'warm'}>{p.payed ? 'Pagada' : 'Pendiente'}</Badge>
+              {canMutate && (
               <button
                 type="button" onClick={() => void remove(p.id)} disabled={busy}
                 aria-label={`Eliminar sanción ${p.id}`}
@@ -347,6 +357,7 @@ function PenaltiesTab({ citizenid }: { citizenid: string }) {
               >
                 <Trash2 size={15} />
               </button>
+              )}
             </Card>
           ))}
         </div>
@@ -400,6 +411,8 @@ function InventoryTab({ citizenid }: { citizenid: string }) {
 }
 
 function VehiclesTab({ citizenid }: { citizenid: string }) {
+  const { data: me } = useMe()
+  const canMutate = me?.staffPermissions?.includes('vehicles') ?? false
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useStaffVehicles(citizenid)
   const [busy, setBusy] = useState<string | null>(null)
@@ -436,6 +449,7 @@ function VehiclesTab({ citizenid }: { citizenid: string }) {
               <Badge tone={v.state === 'impound' ? 'danger' : v.state === 'garage' ? 'accent' : 'neutral'}>
                 {VEHICLE_STATE_LABEL[v.state]}
               </Badge>
+              {canMutate && (
               <div className="flex gap-1.5">
                 <button
                   type="button" disabled={busy === v.plate}
@@ -459,9 +473,15 @@ function VehiclesTab({ citizenid }: { citizenid: string }) {
                   Liberar
                 </button>
               </div>
+              )}
             </Card>
           ))}
         </div>
+      )}
+      {!canMutate && data && data.length > 0 && (
+        <p className="mt-2 text-xs text-ink-faint">
+          Tu rol permite ver vehículos, no moverlos de garaje.
+        </p>
       )}
     </div>
   )

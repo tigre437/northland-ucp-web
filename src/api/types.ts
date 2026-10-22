@@ -30,6 +30,8 @@ export interface Me {
   csrfToken: string
   /** true si el usuario tiene acceso al panel de staff. */
   staff: boolean
+  /** Permisos granulares por rol de Discord: 'view' | 'sanctions' | 'vehicles'. */
+  staffPermissions?: string[]
 }
 
 export interface JobInfo {
