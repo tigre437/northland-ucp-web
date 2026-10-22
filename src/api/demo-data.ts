@@ -1,15 +1,20 @@
 import type {
   ActivityStats,
   Agency,
+  AuditEntry,
   Business,
   Character,
   CharacterRecord,
   Finances,
+  InventoryItem,
   Invoice,
   LicenseDoc,
   Me,
+  PlayerSearchResult,
   Property,
   ServerInfo,
+  StaffPenalty,
+  StaffPlayerDetail,
   UcpNotification,
   Vehicle,
 } from './types'
@@ -36,6 +41,7 @@ export const demoMe: Me = {
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 6).toISOString(),
   },
   csrfToken: 'demo',
+  staff: true,
 }
 
 export const demoCharacters: Character[] = [
@@ -352,5 +358,87 @@ export const demoNotifications: UcpNotification[] = [
     title: 'Préstamo con cuotas impagadas',
     description: '1 cuota vencida — 10000/52500 pagado',
     href: '/economia',
+  },
+]
+
+// ── Staff (demo) ─────────────────────────────────────────────────
+
+export const demoStaffSearch: PlayerSearchResult[] = [
+  {
+    citizenid: 'OTRO1234',
+    cid: 0,
+    name: 'Otro Ajeno',
+    jobLabel: 'Civilian',
+    lastLoggedOut: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+  },
+  {
+    citizenid: 'J6ZI2KS2',
+    cid: 0,
+    name: 'Tigre Dev',
+    jobLabel: 'LSPD',
+    lastLoggedOut: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
+  },
+]
+
+export const demoStaffPlayer: StaffPlayerDetail = {
+  citizenid: 'OTRO1234',
+  cid: 0,
+  userId: 2,
+  name: 'Otro Ajeno',
+  licenseMasked: 'license2:…bbbb',
+  phone: null,
+  cash: 1,
+  bank: 1,
+  jobName: 'unemployed',
+  jobLabel: 'Civilian',
+  jobGrade: 'x',
+  onDuty: false,
+  inPrison: true,
+  prisonRemaining: 15,
+  bans: [
+    { source: 'bans', reason: 'Cheating', bannedBy: 'Console', expiresAt: 0, active: true },
+    { source: 'qs_admin_bans', reason: 'RDM', bannedBy: 'Admin', expiresAt: null, active: true },
+  ],
+  lastLoggedOut: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+}
+
+export const demoStaffInventory: InventoryItem[] = [
+  { slot: 1, name: 'authorization_document', label: 'Documento de autorización', amount: 1, type: 'item', info: { quality: 100 } },
+  { slot: 2, name: 'weapon_pistol', label: 'Pistola', amount: 1, type: 'weapon', info: { serie: 'ABC123' } },
+  { slot: 5, name: 'tshirt', label: 'T-shirt', amount: 1, type: 'item', info: {} },
+  { slot: 6, name: 'water', label: 'Agua', amount: 3, type: 'item', info: {} },
+]
+
+export const demoStaffPenalties: StaffPenalty[] = [
+  {
+    id: 7,
+    job: 'police',
+    appliedBy: 'Tigre437',
+    totalFine: 2500,
+    payed: false,
+    totalMonths: 0,
+    charges: [{ label: 'Conducción temeraria', fine: 2500, months: 0 }],
+    appliedAt: '2026-10-19',
+  },
+]
+
+export const demoAudit: AuditEntry[] = [
+  {
+    id: 3,
+    actorDiscordId: '474332573703864330',
+    actorName: 'Tigre437',
+    action: 'penalty.create',
+    target: 'J6ZI2KS2',
+    detail: 'fine=1200 months=0 charges=Huir de la escena',
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+  },
+  {
+    id: 2,
+    actorDiscordId: '474332573703864330',
+    actorName: 'Tigre437',
+    action: 'vehicle.update',
+    target: '00GLY025',
+    detail: 'garage=Impound Norte state=1',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
   },
 ]

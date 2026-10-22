@@ -28,6 +28,8 @@ export interface Me {
   link: LinkStatus
   session: SessionInfo
   csrfToken: string
+  /** true si el usuario tiene acceso al panel de staff. */
+  staff: boolean
 }
 
 export interface JobInfo {
@@ -335,6 +337,86 @@ export interface UcpNotification {
   href: string | null
 }
 
+// ── Panel de staff ───────────────────────────────────────────────
+
+export interface PlayerSearchResult {
+  citizenid: string
+  cid: number | null
+  name: string
+  jobLabel: string | null
+  lastLoggedOut: string | null
+}
+
+export interface InventoryItem {
+  slot: number | null
+  name: string
+  label: string | null
+  amount: number
+  type: string | null
+  info: Record<string, unknown>
+}
+
+export interface BanEntry {
+  source: 'bans' | 'qs_admin_bans'
+  reason: string | null
+  bannedBy: string | null
+  expiresAt: number | null
+  active: boolean
+}
+
+export interface StaffPlayerDetail {
+  citizenid: string
+  cid: number | null
+  userId: number | null
+  name: string
+  licenseMasked: string | null
+  phone: string | null
+  cash: number
+  bank: number
+  jobName: string | null
+  jobLabel: string | null
+  jobGrade: string | null
+  onDuty: boolean
+  inPrison: boolean
+  prisonRemaining: number | null
+  bans: BanEntry[]
+  lastLoggedOut: string | null
+}
+
+export interface StaffPenalty {
+  id: number
+  job: string | null
+  appliedBy: string | null
+  totalFine: number
+  payed: boolean
+  totalMonths: number
+  charges: Record<string, unknown>[]
+  appliedAt: string | null
+}
+
+export interface AuditEntry {
+  id: number
+  actorDiscordId: string
+  actorName: string | null
+  action: string
+  target: string
+  detail: string | null
+  createdAt: string | null
+}
+
+export interface NewPenalty {
+  fine: number
+  months: number
+  charges: string[]
+  job: string
+}
+
+export interface WriteResult {
+  ok: boolean
+  id: number | null
+  message: string | null
+}
+
 /** Contrato que cumplen la API real (HttpApi) y la de demostración (DemoApi). */
 export interface UcpApi {
   loginUrl(): string
@@ -354,6 +436,16 @@ export interface UcpApi {
   getStats(): Promise<ActivityStats>
   getNotifications(): Promise<UcpNotification[]>
   getServerInfo(): Promise<ServerInfo>
+  // staff
+  staffSearch(q: string): Promise<PlayerSearchResult[]>
+  staffPlayer(citizenid: string): Promise<StaffPlayerDetail>
+  staffInventory(citizenid: string): Promise<InventoryItem[]>
+  staffVehicles(citizenid: string): Promise<Vehicle[]>
+  staffPenalties(citizenid: string): Promise<StaffPenalty[]>
+  staffAddPenalty(citizenid: string, penalty: NewPenalty): Promise<WriteResult>
+  staffDeletePenalty(penaltyId: number): Promise<WriteResult>
+  staffUpdateVehicle(plate: string, update: { garage?: string; state?: number }): Promise<WriteResult>
+  staffAudit(): Promise<AuditEntry[]>
   logout(): Promise<void>
 }
 

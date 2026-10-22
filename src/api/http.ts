@@ -4,18 +4,25 @@ import { ApiError } from './types'
 import type {
   ActivityStats,
   Agency,
+  AuditEntry,
   Business,
   Character,
   CharacterRecord,
   Finances,
+  InventoryItem,
   Invoice,
   LicenseDoc,
   Me,
+  NewPenalty,
+  PlayerSearchResult,
   Property,
   ServerInfo,
+  StaffPenalty,
+  StaffPlayerDetail,
   UcpApi,
   UcpNotification,
   Vehicle,
+  WriteResult,
 } from './types'
 
 interface ErrorBody {
@@ -127,6 +134,52 @@ export class HttpApi implements UcpApi {
 
   getServerInfo(): Promise<ServerInfo> {
     return this.request<ServerInfo>('/server/info')
+  }
+
+  // ── Staff ───────────────────────────────────────────────────────
+
+  staffSearch(q: string): Promise<PlayerSearchResult[]> {
+    return this.request<PlayerSearchResult[]>(`/staff/search?q=${encodeURIComponent(q)}`)
+  }
+
+  staffPlayer(citizenid: string): Promise<StaffPlayerDetail> {
+    return this.request<StaffPlayerDetail>(`/staff/players/${encodeURIComponent(citizenid)}`)
+  }
+
+  staffInventory(citizenid: string): Promise<InventoryItem[]> {
+    return this.request<InventoryItem[]>(`/staff/players/${encodeURIComponent(citizenid)}/inventory`)
+  }
+
+  staffVehicles(citizenid: string): Promise<Vehicle[]> {
+    return this.request<Vehicle[]>(`/staff/players/${encodeURIComponent(citizenid)}/vehicles`)
+  }
+
+  staffPenalties(citizenid: string): Promise<StaffPenalty[]> {
+    return this.request<StaffPenalty[]>(`/staff/players/${encodeURIComponent(citizenid)}/penalties`)
+  }
+
+  staffAddPenalty(citizenid: string, penalty: NewPenalty): Promise<WriteResult> {
+    return this.request<WriteResult>(`/staff/players/${encodeURIComponent(citizenid)}/penalties`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(penalty),
+    })
+  }
+
+  staffDeletePenalty(penaltyId: number): Promise<WriteResult> {
+    return this.request<WriteResult>(`/staff/penalties/${penaltyId}`, { method: 'DELETE' })
+  }
+
+  staffUpdateVehicle(plate: string, update: { garage?: string; state?: number }): Promise<WriteResult> {
+    return this.request<WriteResult>(`/staff/vehicles/${encodeURIComponent(plate)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(update),
+    })
+  }
+
+  staffAudit(): Promise<AuditEntry[]> {
+    return this.request<AuditEntry[]>('/staff/audit')
   }
 
   async logout(): Promise<void> {

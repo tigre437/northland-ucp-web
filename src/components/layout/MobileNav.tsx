@@ -2,15 +2,16 @@ import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
-import { NAV_ITEMS } from './nav'
+import { useNavItems } from './nav'
 
 /** Navegación inferior fija para móvil (< md). Las 4 primeras secciones
  * van en la barra; el resto se abre desde «Más». */
 export function MobileNav() {
   const [open, setOpen] = useState(false)
+  const navItems = useNavItems()
 
-  const primary = NAV_ITEMS.slice(0, 4)
-  const secondary = NAV_ITEMS.slice(4)
+  const primary = navItems.slice(0, 4)
+  const secondary = navItems.slice(4)
 
   return (
     <>

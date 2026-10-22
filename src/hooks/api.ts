@@ -69,3 +69,59 @@ export function useNotifications() {
 export function useServerInfo() {
   return useQuery({ queryKey: queryKeys.serverInfo, queryFn: () => api.getServerInfo(), retry: sessionRetry })
 }
+
+// ── Staff ─────────────────────────────────────────────────────────
+
+export function useStaffSearch(q: string) {
+  return useQuery({
+    queryKey: ['staff-search', q] as const,
+    queryFn: () => api.staffSearch(q),
+    retry: sessionRetry,
+    enabled: q.trim().length >= 2,
+  })
+}
+
+export function useStaffPlayer(citizenid: string | null) {
+  return useQuery({
+    queryKey: ['staff-player', citizenid] as const,
+    queryFn: () => api.staffPlayer(citizenid!),
+    retry: sessionRetry,
+    enabled: Boolean(citizenid),
+  })
+}
+
+export function useStaffInventory(citizenid: string | null) {
+  return useQuery({
+    queryKey: ['staff-inventory', citizenid] as const,
+    queryFn: () => api.staffInventory(citizenid!),
+    retry: sessionRetry,
+    enabled: Boolean(citizenid),
+  })
+}
+
+export function useStaffVehicles(citizenid: string | null) {
+  return useQuery({
+    queryKey: ['staff-vehicles', citizenid] as const,
+    queryFn: () => api.staffVehicles(citizenid!),
+    retry: sessionRetry,
+    enabled: Boolean(citizenid),
+  })
+}
+
+export function useStaffPenalties(citizenid: string | null) {
+  return useQuery({
+    queryKey: ['staff-penalties', citizenid] as const,
+    queryFn: () => api.staffPenalties(citizenid!),
+    retry: sessionRetry,
+    enabled: Boolean(citizenid),
+  })
+}
+
+export function useStaffAudit(enabled: boolean) {
+  return useQuery({
+    queryKey: ['staff-audit'] as const,
+    queryFn: () => api.staffAudit(),
+    retry: sessionRetry,
+    enabled,
+  })
+}

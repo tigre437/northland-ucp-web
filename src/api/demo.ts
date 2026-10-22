@@ -2,21 +2,29 @@ import { ApiError } from './types'
 import type {
   ActivityStats,
   Agency,
+  AuditEntry,
   Business,
   Character,
   CharacterRecord,
   Finances,
+  InventoryItem,
   Invoice,
   LicenseDoc,
   Me,
+  NewPenalty,
+  PlayerSearchResult,
   Property,
   ServerInfo,
+  StaffPenalty,
+  StaffPlayerDetail,
   UcpApi,
   UcpNotification,
   Vehicle,
+  WriteResult,
 } from './types'
 import {
   demoAgencies,
+  demoAudit,
   demoBusinesses,
   demoCharacters,
   demoFinances,
@@ -27,6 +35,10 @@ import {
   demoProperties,
   demoRecords,
   demoServerInfo,
+  demoStaffInventory,
+  demoStaffPenalties,
+  demoStaffPlayer,
+  demoStaffSearch,
   demoStats,
   demoVehicles,
 } from './demo-data'
@@ -120,6 +132,76 @@ export class DemoApi implements UcpApi {
   async getServerInfo(): Promise<ServerInfo> {
     await latency()
     return demoServerInfo
+  }
+
+  // ── Staff (demo) ────────────────────────────────────────────────
+
+  async staffSearch(q: string): Promise<PlayerSearchResult[]> {
+    await latency()
+    const needle = q.toLowerCase()
+    return demoStaffSearch.filter(
+      (p) => p.name.toLowerCase().includes(needle) || p.citizenid.toLowerCase().includes(needle),
+    )
+  }
+
+  async staffPlayer(citizenid: string): Promise<StaffPlayerDetail> {
+    await latency()
+    if (citizenid === demoStaffPlayer.citizenid) return demoStaffPlayer
+    const found = demoStaffSearch.find((p) => p.citizenid === citizenid)
+    if (!found) throw new ApiError(404, 'not_found', 'Jugador no encontrado')
+    return { ...demoStaffPlayer, citizenid, name: found.name, bans: [], inPrison: false, prisonRemaining: null }
+  }
+
+  async staffInventory(): Promise<InventoryItem[]> {
+    await latency()
+    return demoStaffInventory
+  }
+
+  async staffVehicles(): Promise<Vehicle[]> {
+    await latency()
+    return demoVehicles
+  }
+
+  async staffPenalties(): Promise<StaffPenalty[]> {
+    await latency()
+    return demoStaffPenalties
+  }
+
+  async staffAddPenalty(_citizenid: string, penalty: NewPenalty): Promise<WriteResult> {
+    await latency()
+    demoStaffPenalties.unshift({
+      id: Date.now() % 100000,
+      job: penalty.job,
+      appliedBy: 'Tigre437',
+      totalFine: penalty.fine,
+      payed: false,
+      totalMonths: penalty.months,
+      charges: penalty.charges.map((c) => ({ label: c, fine: 0, months: 0 })),
+      appliedAt: new Date().toISOString().slice(0, 10),
+    })
+    return { ok: true, id: demoStaffPenalties[0].id, message: null }
+  }
+
+  async staffDeletePenalty(penaltyId: number): Promise<WriteResult> {
+    await latency()
+    const i = demoStaffPenalties.findIndex((p) => p.id === penaltyId)
+    if (i >= 0) demoStaffPenalties.splice(i, 1)
+    return { ok: true, id: penaltyId, message: null }
+  }
+
+  async staffUpdateVehicle(plate: string, update: { garage?: string; state?: number }): Promise<WriteResult> {
+    await latency()
+    const v = demoVehicles.find((x) => x.plate === plate)
+    if (v) {
+      if (update.garage) v.garage = update.garage
+      if (update.state != null) v.state = update.state === 1 ? 'garage' : update.state === 2 ? 'impound' : 'out'
+    }
+    return { ok: true, id: null, message: null }
+  }
+
+  async staffAudit(): Promise<AuditEntry[]> {
+    await latency()
+    return demoAudit
   }
 
   async logout(): Promise<void> {

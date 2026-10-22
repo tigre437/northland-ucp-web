@@ -4,10 +4,11 @@ import { isDemo } from '@/config/env'
 import { useServerInfo } from '@/hooks/api'
 
 import { BrandMark } from './BrandMark'
-import { NAV_ITEMS } from './nav'
+import { useNavItems } from './nav'
 
 export function Sidebar() {
   const { data: server } = useServerInfo()
+  const navItems = useNavItems()
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line-soft bg-panel md:flex">
@@ -16,7 +17,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4" aria-label="Secciones">
-        {NAV_ITEMS.map(({ to, label, icon: Icon, ...rest }) => (
+        {navItems.map(({ to, label, icon: Icon, ...rest }) => (
           <NavLink
             key={to}
             to={to}

@@ -13,6 +13,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { PropertiesPage } from '@/pages/PropertiesPage'
 import { RecordsPage } from '@/pages/RecordsPage'
+import { StaffPage } from '@/pages/StaffPage'
 import { VehiclesPage } from '@/pages/VehiclesPage'
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="negocios" element={<BusinessesPage />} />
         <Route path="actividad" element={<ActivityPage />} />
         <Route path="cuenta" element={<ProfilePage />} />
+        <Route path="staff" element={<StaffPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
