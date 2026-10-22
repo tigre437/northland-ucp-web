@@ -141,7 +141,13 @@ export function ProfilePage() {
                     </span>
                     {s.type === 'ban' && (
                       <Badge tone={s.active ? 'danger' : 'neutral'}>
-                        {s.active ? (s.expiresAt ? 'Activo' : 'Permanente') : 'Expirado/Revocado'}
+                        {s.active
+                          ? s.expiresAt
+                            ? 'Activo'
+                            : 'Permanente'
+                          : s.revoked
+                            ? 'Revocado'
+                            : 'Cumplido'}
                       </Badge>
                     )}
                     {s.type !== 'ban' && (

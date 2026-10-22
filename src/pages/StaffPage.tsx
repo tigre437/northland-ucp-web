@@ -369,7 +369,9 @@ function SummaryTab({ player: p, perms }: { player: StaffPlayerDetail; perms: Se
               {b.source === 'bans' ? 'qbox' : 'qs-admin'} · por {b.bannedBy ?? '—'}
             </span>
           </span>
-          <Badge tone={b.active ? 'danger' : 'neutral'}>{b.active ? 'Activo' : 'Revocado'}</Badge>
+          <Badge tone={b.active ? 'danger' : 'neutral'}>
+            {b.active ? 'Activo' : b.revoked ? 'Revocado' : 'Cumplido'}
+          </Badge>
           {perms.has('bans.revoke') && b.source === 'qs_admin_bans' && b.active && b.id != null && (
             <button type="button" className={btnCls} disabled={busy} onClick={() => void revoke(b.id!)}>
               Desbanear
@@ -541,7 +543,13 @@ function SanctionsTab({
               </div>
               {s.type === 'ban' && (
                 <Badge tone={s.active ? 'danger' : 'neutral'}>
-                  {s.active ? (s.expiresAt ? 'Activo' : 'Permanente') : 'Expirado/Revocado'}
+                  {s.active
+                    ? s.expiresAt
+                      ? 'Activo'
+                      : 'Permanente'
+                    : s.revoked
+                      ? 'Revocado'
+                      : 'Cumplido'}
                 </Badge>
               )}
               {s.type !== 'ban' && (

@@ -370,6 +370,8 @@ export interface BanEntry {
   createdAt: number | null
   expiresAt: number | null
   active: boolean
+  /** qs_admin_bans: revocado a mano (si no, expiró). */
+  revoked?: boolean | null
 }
 
 export interface StaffPlayerDetail {
@@ -466,6 +468,8 @@ export interface SanctionEntry {
   createdAt: string | null
   expiresAt: number | null
   active: boolean | null
+  /** Ban revocado a mano (si no, expiró de forma natural). */
+  revoked?: boolean | null
   pending: boolean | null
   result: string | null
   /** Kick/warn: personaje afectado (historial de cuenta). */
