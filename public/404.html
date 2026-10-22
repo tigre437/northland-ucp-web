@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirigiendo…</title>
+    <script>
+      // GitHub Pages SPA fallback: guarda la ruta solicitada y vuelve al índice.
+      // index.html la restaura desde sessionStorage.
+      ;(function () {
+        sessionStorage.setItem('spa-redirect', location.pathname + location.search + location.hash)
+        var base = location.pathname.split('/')[1]
+        location.replace('/' + (base ? base + '/' : ''))
+      })()
+    </script>
+  </head>
+  <body></body>
+</html>

@@ -1,0 +1,125 @@
+@import 'tailwindcss';
+@import '@fontsource/public-sans/400.css';
+@import '@fontsource/public-sans/500.css';
+@import '@fontsource/public-sans/600.css';
+@import '@fontsource/public-sans/700.css';
+@import '@fontsource/archivo/500.css';
+@import '@fontsource/archivo/600.css';
+@import '@fontsource/archivo/700.css';
+
+/*
+ * Northland community — Design tokens
+ * ------------------------------------
+ * Para cambiar la identidad visual globalmente, edita ÚNICAMENTE
+ * los valores de este bloque. Los componentes nunca usan colores
+ * literales: siempre referencian los alias semánticos.
+ */
+@theme {
+  --font-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Archivo', 'Public Sans', ui-sans-serif, sans-serif;
+
+  /* — Paleta: pinos y bosque (verde oscuro) — */
+  --color-pine-950: #0d1611;
+  --color-pine-900: #12201a;
+  --color-pine-850: #16251d;
+  --color-pine-800: #1b2d23;
+  --color-pine-700: #243c2e;
+  --color-pine-600: #304f3c;
+  --color-pine-500: #40644b;
+  --color-pine-400: #5d8369;
+  --color-pine-300: #85a58c;
+  --color-pine-200: #b2c7b6;
+  --color-pine-100: #d5e2d8;
+
+  /* — Paleta: crema, beige y tierra — */
+  --color-cream-50: #f7f3e6;
+  --color-cream-100: #efe8d3;
+  --color-cream-200: #e0d5b7;
+  --color-cream-300: #cbbd97;
+  --color-cream-400: #b0a078;
+  --color-cream-500: #90835f;
+
+  /* — Paleta: oliva (acento principal) — */
+  --color-olive-300: #bcc98d;
+  --color-olive-400: #9dae6b;
+  --color-olive-500: #809151;
+  --color-olive-600: #66743f;
+
+  /* — Paleta: ámbar (acento cálido, uso discreto) — */
+  --color-brand-300: #ecbd7d;
+  --color-brand-400: #dfa254;
+  --color-brand-500: #cd8a37;
+  --color-brand-600: #a86f2b;
+
+  /* — Paleta: óxido (errores / peligro) — */
+  --color-rust-300: #d99682;
+  --color-rust-400: #cb7050;
+  --color-rust-500: #b0563b;
+
+  /* — Alias semánticos — */
+  --color-base: var(--color-pine-950);
+  --color-panel: var(--color-pine-900);
+  --color-card: var(--color-pine-850);
+  --color-card-hover: var(--color-pine-800);
+  --color-line: var(--color-pine-700);
+  --color-line-soft: var(--color-pine-800);
+
+  --color-ink: var(--color-cream-50);
+  --color-ink-dim: var(--color-pine-200);
+  --color-ink-faint: var(--color-pine-300);
+
+  --color-accent: var(--color-olive-400);
+  --color-accent-strong: var(--color-olive-300);
+  --color-accent-deep: var(--color-olive-600);
+
+  --color-warm: var(--color-brand-400);
+  --color-warm-strong: var(--color-brand-300);
+
+  --color-danger: var(--color-rust-400);
+  --color-danger-strong: var(--color-rust-300);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-base text-ink font-sans antialiased;
+  }
+
+  ::selection {
+    background: var(--color-accent-deep);
+    color: var(--color-cream-50);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-pine-700);
+    border-radius: 8px;
+    border: 2px solid var(--color-base);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* Pequeños bloques de etiqueta estilo «señal de carretera» */
+  .kicker {
+    @apply font-display text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-faint;
+  }
+
+  .panel-title {
+    @apply font-display font-semibold tracking-tight text-ink;
+  }
+}
