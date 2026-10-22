@@ -72,12 +72,12 @@ export function useServerInfo() {
 
 // ── Staff ─────────────────────────────────────────────────────────
 
-export function useStaffSearch(q: string) {
+export function useStaffSearch(q: string, enabled = true) {
   return useQuery({
     queryKey: ['staff-search', q] as const,
     queryFn: () => api.staffSearch(q),
     retry: sessionRetry,
-    enabled: q.trim().length >= 2,
+    enabled,
   })
 }
 

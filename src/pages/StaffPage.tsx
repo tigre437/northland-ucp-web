@@ -45,7 +45,7 @@ export function StaffPage() {
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('resumen')
-  const search = useStaffSearch(perms.has('players.view') ? q : '')
+  const search = useStaffSearch(q, perms.has('players.view'))
 
   if (me && !me.staff) {
     return (
@@ -81,14 +81,21 @@ export function StaffPage() {
           />
         </div>
 
-        {q.trim().length >= 2 && (
-          <div className="mt-2 divide-y divide-line-soft">
+        {(
+          <p className="mt-3 text-xs text-ink-faint">
+            {q.trim() ? 'Resultados' : 'Últimos jugadores activos'} — pulsa uno para ver su ficha.
+          </p>
+        )}
+        {(
+          <div className="mt-1 divide-y divide-line-soft">
             {search.isLoading ? (
               <Skeleton className="h-10" />
             ) : search.isError ? (
-              <p className="py-2 text-sm text-danger-strong">Error al buscar.</p>
+              <p className="py-2 text-sm text-danger-strong">Error al cargar jugadores.</p>
             ) : !search.data?.length ? (
-              <p className="py-2 text-sm text-ink-faint">Sin resultados para «{q}».</p>
+              <p className="py-2 text-sm text-ink-faint">
+                {q.trim() ? `Sin resultados para «${q}».` : 'Sin jugadores.'}
+              </p>
             ) : (
               search.data.map((p) => (
                 <button
