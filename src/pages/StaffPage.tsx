@@ -15,13 +15,14 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api, STAFF_PERMS } from '@/api'
-import type { StaffPlayerDetail } from '@/api'
+import type { NewSanction, StaffPlayerDetail } from '@/api'
 import {
   useMe,
   useStaffAudit,
   useStaffInventory,
   useStaffPenalties,
   useStaffPlayer,
+  useStaffSanctions,
   useStaffSearch,
   useStaffVehicles,
 } from '@/hooks/api'
@@ -29,7 +30,7 @@ import { formatDateTime, formatMoney, relativeTime, VEHICLE_STATE_LABEL } from '
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/feedback'
 import { Badge, Card, KeyVal, PageHeader, SectionTitle } from '@/components/ui/surfaces'
 
-type Tab = 'resumen' | 'sanciones' | 'inventario' | 'vehiculos' | 'permisos'
+type Tab = 'resumen' | 'sanciones' | 'multas' | 'inventario' | 'vehiculos' | 'permisos'
 
 const inputCls =
   'rounded-md border border-line bg-card-hover px-2 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none'
@@ -145,7 +146,8 @@ function PlayerPanel({
 
   const allTabs: { id: Tab; label: string; icon: typeof Gavel; perm: string }[] = [
     { id: 'resumen', label: 'Resumen', icon: ShieldCheck, perm: 'players.view' },
-    { id: 'sanciones', label: 'Sanciones', icon: Gavel, perm: 'penalties.view' },
+    { id: 'sanciones', label: 'Sanciones', icon: Ban, perm: 'players.view' },
+    { id: 'multas', label: 'Multas', icon: Gavel, perm: 'penalties.view' },
     { id: 'inventario', label: 'Inventario', icon: Package, perm: 'inventory.view' },
     { id: 'vehiculos', label: 'Vehículos', icon: Car, perm: 'vehicles.view' },
   ]
@@ -184,7 +186,10 @@ function PlayerPanel({
       )}
 
       {tab === 'resumen' && detail.data && <SummaryTab player={detail.data} perms={perms} />}
-      {tab === 'sanciones' && perms.has('penalties.view') && (
+      {tab === 'sanciones' && perms.has('players.view') && (
+        <SanctionsTab citizenid={citizenid} perms={perms} />
+      )}
+      {tab === 'multas' && perms.has('penalties.view') && (
         <PenaltiesTab citizenid={citizenid} perms={perms} />
       )}
       {tab === 'inventario' && perms.has('inventory.view') && <InventoryTab citizenid={citizenid} />}
@@ -224,31 +229,10 @@ function PlayerHeader({ player: p }: { player: StaffPlayerDetail }) {
 
 function SummaryTab({ player: p, perms }: { player: StaffPlayerDetail; perms: Set<string> }) {
   const queryClient = useQueryClient()
-  const [banForm, setBanForm] = useState({ reason: '', days: '' })
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ['staff-player', p.citizenid] })
-
-  async function submitBan(e: React.FormEvent) {
-    e.preventDefault()
-    setBusy(true)
-    setError(null)
-    try {
-      const days = Number(banForm.days)
-      await api.staffCreateBan(p.citizenid, {
-        reason: banForm.reason,
-        expiresAt: days > 0 ? Math.floor(Date.now() / 1000) + days * 86400 : null,
-      })
-      setBanForm({ reason: '', days: '' })
-      await invalidate()
-    } catch {
-      setError('No se pudo banear (¿escritura no configurada?)')
-    } finally {
-      setBusy(false)
-    }
-  }
 
   async function revoke(banId: number) {
     setBusy(true)
@@ -292,33 +276,174 @@ function SummaryTab({ player: p, perms }: { player: StaffPlayerDetail; perms: Se
           )}
         </div>
       ))}
-
-      {perms.has('bans.create') && (
-        <form onSubmit={submitBan} className="mt-3 flex flex-wrap items-end gap-3">
-          <label className="min-w-52 flex-1 text-xs text-ink-faint">
-            Motivo del ban
-            <input
-              type="text" required value={banForm.reason}
-              onChange={(e) => setBanForm({ ...banForm, reason: e.target.value })}
-              placeholder="RDM, cheating…"
-              className={`mt-1 block w-full ${inputCls}`}
-            />
-          </label>
-          <label className="text-xs text-ink-faint">
-            Días (vacío = permanente)
-            <input
-              type="number" min="0" value={banForm.days}
-              onChange={(e) => setBanForm({ ...banForm, days: e.target.value })}
-              className={`mt-1 block w-24 ${inputCls}`}
-            />
-          </label>
-          <button type="submit" disabled={busy} className={btnCls}>
-            Banear
-          </button>
-        </form>
-      )}
-      {error && <p className="mt-2 text-xs text-danger-strong">{error}</p>}
     </Card>
+  )
+}
+
+/** Sanciones de administración: avisos, kicks y bans con duración. */
+function SanctionsTab({ citizenid, perms }: { citizenid: string; perms: Set<string> }) {
+  const queryClient = useQueryClient()
+  const { data, isLoading, isError, refetch } = useStaffSanctions(citizenid)
+  const [form, setForm] = useState({ type: 'warn' as 'warn' | 'kick' | 'ban', reason: '', value: '', unit: 'days' })
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const can = (p: string) => perms.has(p)
+  const canAny = can('admin.warn') || can('admin.kick') || can('bans.create')
+
+  const typeLabel = { warn: 'Aviso', kick: 'Kick', ban: 'Ban' } as const
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ['staff-sanctions', citizenid] })
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      const value = Number(form.value)
+      await api.staffAddSanction(citizenid, {
+        type: form.type,
+        reason: form.reason,
+        durationValue: form.type === 'ban' && form.unit !== 'permanent' && value > 0 ? value : null,
+        durationUnit: (form.type === 'ban' ? form.unit : 'permanent') as NewSanction['durationUnit'],
+      })
+      setForm({ ...form, reason: '' })
+      await invalidate()
+    } catch {
+      setError('No se pudo aplicar (¿permiso o escritura no configurada?)')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function revokeBan(banId: number) {
+    setBusy(true)
+    try {
+      await api.staffRevokeBan(banId)
+      await invalidate()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {canAny && (
+        <Card className="p-4">
+          <SectionTitle>
+            <span className="inline-flex items-center gap-2">
+              <Plus size={14} /> Nueva sanción
+            </span>
+          </SectionTitle>
+          <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+            <label className="text-xs text-ink-faint">
+              Tipo
+              <select
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value as typeof form.type })}
+                className={`mt-1 block ${inputCls}`}
+              >
+                <option value="warn" disabled={!can('admin.warn')}>Aviso</option>
+                <option value="kick" disabled={!can('admin.kick')}>Kick</option>
+                <option value="ban" disabled={!can('bans.create')}>Ban</option>
+              </select>
+            </label>
+            {form.type === 'ban' && (
+              <>
+                <label className="text-xs text-ink-faint">
+                  Duración
+                  <input
+                    type="number" min="1" value={form.value}
+                    disabled={form.unit === 'permanent'}
+                    onChange={(e) => setForm({ ...form, value: e.target.value })}
+                    className={`mt-1 block w-20 ${inputCls}`}
+                  />
+                </label>
+                <label className="text-xs text-ink-faint">
+                  Unidad
+                  <select
+                    value={form.unit}
+                    onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                    className={`mt-1 block ${inputCls}`}
+                  >
+                    <option value="minutes">Minutos</option>
+                    <option value="hours">Horas</option>
+                    <option value="days">Días</option>
+                    <option value="months">Meses</option>
+                    <option value="permanent">Permanente</option>
+                  </select>
+                </label>
+              </>
+            )}
+            <label className="min-w-52 flex-1 text-xs text-ink-faint">
+              Motivo
+              <input
+                type="text" required value={form.reason}
+                onChange={(e) => setForm({ ...form, reason: e.target.value })}
+                placeholder="RDM, VDM, NLR…"
+                className={`mt-1 block w-full ${inputCls}`}
+              />
+            </label>
+            <button
+              type="submit" disabled={busy}
+              className="rounded-md border border-accent-deep/60 bg-accent-deep/25 px-3 py-1.5 text-sm font-medium text-accent-strong transition-colors hover:bg-accent-deep/40 disabled:opacity-50"
+            >
+              Aplicar
+            </button>
+          </form>
+          {error && <p className="mt-2 text-xs text-danger-strong">{error}</p>}
+          {(form.type === 'warn' || form.type === 'kick') && (
+            <p className="mt-2 text-xs text-ink-faint">
+              Se ejecuta dentro del juego cuando el jugador esté conectado
+              (resource ucp_bridge).
+            </p>
+          )}
+        </Card>
+      )}
+
+      {isLoading ? (
+        <Skeleton className="h-24" />
+      ) : isError ? (
+        <ErrorState description="No se pudo cargar el historial." onRetry={() => void refetch()} />
+      ) : !data?.length ? (
+        <p className="text-sm text-ink-faint">Sin sanciones de administración.</p>
+      ) : (
+        <div className="space-y-2">
+          {data.map((s) => (
+            <Card key={`${s.type}:${s.id}`} className="flex flex-wrap items-center gap-3 p-3">
+              <Badge tone={s.type === 'ban' ? 'danger' : s.type === 'kick' ? 'warm' : 'neutral'}>
+                {typeLabel[s.type]}
+              </Badge>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-ink">{s.reason ?? '—'}</p>
+                <p className="text-xs text-ink-faint">
+                  {s.appliedBy ?? '—'} · {s.createdAt?.slice(0, 19).replace('T', ' ') ?? '—'}
+                  {s.type === 'ban' && s.expiresAt != null && (
+                    <> · expira {formatDateTime(new Date(s.expiresAt * 1000).toISOString())}</>
+                  )}
+                </p>
+              </div>
+              {s.type === 'ban' && (
+                <Badge tone={s.active ? 'danger' : 'neutral'}>
+                  {s.active ? (s.expiresAt ? 'Activo' : 'Permanente') : 'Expirado/Revocado'}
+                </Badge>
+              )}
+              {s.type !== 'ban' && (
+                <Badge tone={s.pending ? 'warm' : s.result === 'ok' ? 'accent' : 'neutral'}>
+                  {s.pending ? 'Pendiente' : s.result === 'offline' ? 'Offline' : 'Ejecutado'}
+                </Badge>
+              )}
+              {s.type === 'ban' && s.active && can('bans.revoke') && (
+                <button type="button" className={btnCls} disabled={busy} onClick={() => void revokeBan(s.id)}>
+                  Desbanear
+                </button>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -375,7 +500,7 @@ function PenaltiesTab({ citizenid, perms }: { citizenid: string; perms: Set<stri
         <Card className="p-4">
           <SectionTitle>
             <span className="inline-flex items-center gap-2">
-              <Plus size={14} /> Nueva sanción
+              <Plus size={14} /> Nueva multa
             </span>
           </SectionTitle>
           <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
@@ -415,15 +540,15 @@ function PenaltiesTab({ citizenid, perms }: { citizenid: string; perms: Set<stri
         </Card>
       )}
       {!canCreate && !canDelete && (
-        <p className="text-xs text-ink-faint">Tu rol permite ver sanciones, no modificarlas.</p>
+        <p className="text-xs text-ink-faint">Tu rol permite ver multas, no modificarlas.</p>
       )}
 
       {isLoading ? (
         <Skeleton className="h-24" />
       ) : isError ? (
-        <ErrorState description="No se pudieron cargar las sanciones." onRetry={() => void refetch()} />
+        <ErrorState description="No se pudieron cargar las multas." onRetry={() => void refetch()} />
       ) : !data?.length ? (
-        <p className="text-sm text-ink-faint">Sin sanciones registradas.</p>
+        <p className="text-sm text-ink-faint">Sin multas registradas.</p>
       ) : (
         <div className="space-y-2">
           {data.map((p) => (
@@ -443,7 +568,7 @@ function PenaltiesTab({ citizenid, perms }: { citizenid: string; perms: Set<stri
               {canDelete && (
                 <button
                   type="button" onClick={() => void remove(p.id)} disabled={busy}
-                  aria-label={`Eliminar sanción ${p.id}`}
+                  aria-label={`Eliminar multa ${p.id}`}
                   className="rounded-md p-1.5 text-ink-faint transition-colors hover:bg-rust-500/15 hover:text-danger-strong disabled:opacity-50"
                 >
                   <Trash2 size={15} />

@@ -442,18 +442,42 @@ export interface NewBan {
   expiresAt?: number | null
 }
 
+/** Sanción de administración: aviso, kick o ban con duración. */
+export interface NewSanction {
+  type: 'warn' | 'kick' | 'ban'
+  reason: string
+  durationValue?: number | null
+  durationUnit?: 'minutes' | 'hours' | 'days' | 'months' | 'permanent'
+}
+
+export type SanctionType = 'warn' | 'kick' | 'ban'
+
+export interface SanctionEntry {
+  id: number
+  type: SanctionType
+  reason: string | null
+  appliedBy: string | null
+  createdAt: string | null
+  expiresAt: number | null
+  active: boolean | null
+  pending: boolean | null
+  result: string | null
+}
+
 /** Catálogo de permisos granulares de staff (sincronizado con ALL_PERMS
  * del backend). */
 export const STAFF_PERMS: { id: string; label: string; group: string }[] = [
   { id: 'players.view', label: 'Ver jugadores', group: 'Lectura' },
   { id: 'inventory.view', label: 'Ver inventarios', group: 'Lectura' },
   { id: 'vehicles.view', label: 'Ver vehículos', group: 'Lectura' },
-  { id: 'penalties.view', label: 'Ver sanciones', group: 'Lectura' },
+  { id: 'penalties.view', label: 'Ver multas', group: 'Lectura' },
   { id: 'audit.view', label: 'Ver registro', group: 'Lectura' },
-  { id: 'penalties.create', label: 'Crear sanciones', group: 'Sanciones' },
-  { id: 'penalties.delete', label: 'Borrar sanciones', group: 'Sanciones' },
-  { id: 'bans.create', label: 'Banear', group: 'Bans' },
-  { id: 'bans.revoke', label: 'Desbanear', group: 'Bans' },
+  { id: 'penalties.create', label: 'Crear multas', group: 'Multas' },
+  { id: 'penalties.delete', label: 'Borrar multas', group: 'Multas' },
+  { id: 'admin.warn', label: 'Avisar en juego', group: 'Sanciones' },
+  { id: 'admin.kick', label: 'Expulsar (kick)', group: 'Sanciones' },
+  { id: 'bans.create', label: 'Banear', group: 'Sanciones' },
+  { id: 'bans.revoke', label: 'Desbanear', group: 'Sanciones' },
   { id: 'vehicles.garage', label: 'Mover a garaje', group: 'Vehículos' },
   { id: 'vehicles.impound', label: 'Incautar', group: 'Vehículos' },
   { id: 'vehicles.release', label: 'Liberar', group: 'Vehículos' },
@@ -491,6 +515,8 @@ export interface UcpApi {
   staffDeletePenalty(penaltyId: number): Promise<WriteResult>
   staffCreateBan(citizenid: string, ban: NewBan): Promise<WriteResult>
   staffRevokeBan(banId: number): Promise<WriteResult>
+  staffSanctions(citizenid: string): Promise<SanctionEntry[]>
+  staffAddSanction(citizenid: string, sanction: NewSanction): Promise<WriteResult>
   staffUpdateVehicle(plate: string, update: { garage?: string; state?: number }): Promise<WriteResult>
   staffDeleteVehicle(plate: string): Promise<WriteResult>
   staffTransferVehicle(plate: string, citizenid: string): Promise<WriteResult>

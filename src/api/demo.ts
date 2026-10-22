@@ -14,9 +14,11 @@ import type {
   Me,
   NewBan,
   NewPenalty,
+  NewSanction,
   PlayerSearchResult,
   Property,
   RoleGrant,
+  SanctionEntry,
   ServerInfo,
   StaffPenalty,
   StaffPlayerDetail,
@@ -39,6 +41,7 @@ import {
   demoProperties,
   demoRecords,
   demoRoleGrants,
+  demoSanctions,
   demoServerInfo,
   demoStaffInventory,
   demoStaffPenalties,
@@ -205,6 +208,28 @@ export class DemoApi implements UcpApi {
       createdAt: Math.floor(Date.now() / 1000),
       expiresAt: ban.expiresAt ?? null,
       active: true,
+    })
+    return { ok: true, id, message: null }
+  }
+
+  async staffSanctions(): Promise<SanctionEntry[]> {
+    await latency()
+    return demoSanctions
+  }
+
+  async staffAddSanction(_citizenid: string, s: NewSanction): Promise<WriteResult> {
+    await latency()
+    const id = Date.now() % 100000
+    demoSanctions.unshift({
+      id,
+      type: s.type,
+      reason: s.reason,
+      appliedBy: 'Tigre437',
+      createdAt: s.type === 'ban' ? String(Math.floor(Date.now() / 1000)) : new Date().toISOString().slice(0, 19).replace('T', ' '),
+      expiresAt: s.type === 'ban' && s.durationValue ? Math.floor(Date.now() / 1000) + s.durationValue * 86400 : null,
+      active: s.type === 'ban' ? true : null,
+      pending: s.type !== 'ban' ? true : null,
+      result: null,
     })
     return { ok: true, id, message: null }
   }

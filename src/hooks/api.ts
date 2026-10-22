@@ -108,6 +108,15 @@ export function useStaffVehicles(citizenid: string | null) {
   })
 }
 
+export function useStaffSanctions(citizenid: string | null) {
+  return useQuery({
+    queryKey: ['staff-sanctions', citizenid] as const,
+    queryFn: () => api.staffSanctions(citizenid!),
+    retry: sessionRetry,
+    enabled: Boolean(citizenid),
+  })
+}
+
 export function useStaffPenalties(citizenid: string | null) {
   return useQuery({
     queryKey: ['staff-penalties', citizenid] as const,

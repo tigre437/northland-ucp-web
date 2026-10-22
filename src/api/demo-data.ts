@@ -13,6 +13,7 @@ import type {
   PlayerSearchResult,
   Property,
   RoleGrant,
+  SanctionEntry,
   ServerInfo,
   StaffPenalty,
   StaffPlayerDetail,
@@ -448,6 +449,42 @@ export const demoRoleGrants: RoleGrant[] = [
     roleId: '700',
     roleName: 'Moderador',
     perms: ['players.view', 'vehicles.view', 'penalties.view', 'penalties.create'],
+  },
+]
+
+export const demoSanctions: SanctionEntry[] = [
+  {
+    id: 12,
+    type: 'ban',
+    reason: 'RDM x3 en av. principal',
+    appliedBy: 'Tigre437',
+    createdAt: '1761500000',
+    expiresAt: Math.floor(Date.now() / 1000) + 86400 * 3,
+    active: true,
+    pending: null,
+    result: null,
+  },
+  {
+    id: 9,
+    type: 'kick',
+    reason: 'AFK en evento',
+    appliedBy: 'Tigre437',
+    createdAt: '2026-10-20 22:41:00',
+    expiresAt: null,
+    active: null,
+    pending: false,
+    result: 'ok',
+  },
+  {
+    id: 14,
+    type: 'warn',
+    reason: 'VDM leve, próxima vez ban',
+    appliedBy: 'Tigre437',
+    createdAt: '2026-10-22 18:02:00',
+    expiresAt: null,
+    active: null,
+    pending: true,
+    result: null,
   },
 ]
 

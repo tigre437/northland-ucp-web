@@ -16,9 +16,11 @@ import type {
   Me,
   NewBan,
   NewPenalty,
+  NewSanction,
   PlayerSearchResult,
   Property,
   RoleGrant,
+  SanctionEntry,
   ServerInfo,
   StaffPenalty,
   StaffPlayerDetail,
@@ -186,6 +188,18 @@ export class HttpApi implements UcpApi {
 
   staffRevokeBan(banId: number): Promise<WriteResult> {
     return this.request<WriteResult>(`/staff/bans/${banId}/revoke`, { method: 'POST' })
+  }
+
+  staffSanctions(citizenid: string): Promise<SanctionEntry[]> {
+    return this.request<SanctionEntry[]>(`/staff/players/${encodeURIComponent(citizenid)}/sanctions`)
+  }
+
+  staffAddSanction(citizenid: string, sanction: NewSanction): Promise<WriteResult> {
+    return this.request<WriteResult>(`/staff/players/${encodeURIComponent(citizenid)}/sanctions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sanction),
+    })
   }
 
   staffUpdateVehicle(plate: string, update: { garage?: string; state?: number }): Promise<WriteResult> {
