@@ -359,9 +359,11 @@ export interface InventoryItem {
 }
 
 export interface BanEntry {
+  id: number | null
   source: 'bans' | 'qs_admin_bans'
   reason: string | null
   bannedBy: string | null
+  createdAt: number | null
   expiresAt: number | null
   active: boolean
 }
@@ -419,6 +421,47 @@ export interface WriteResult {
   message: string | null
 }
 
+/** Rol del guild de Discord (para el selector del panel de permisos). */
+export interface GuildRole {
+  id: string
+  name: string
+  color: number
+  position: number
+}
+
+/** Fila de la matriz rol → permisos de staff. */
+export interface RoleGrant {
+  id: number | null
+  roleId: string
+  roleName: string | null
+  perms: string[]
+}
+
+export interface NewBan {
+  reason: string
+  expiresAt?: number | null
+}
+
+/** Catálogo de permisos granulares de staff (sincronizado con ALL_PERMS
+ * del backend). */
+export const STAFF_PERMS: { id: string; label: string; group: string }[] = [
+  { id: 'players.view', label: 'Ver jugadores', group: 'Lectura' },
+  { id: 'inventory.view', label: 'Ver inventarios', group: 'Lectura' },
+  { id: 'vehicles.view', label: 'Ver vehículos', group: 'Lectura' },
+  { id: 'penalties.view', label: 'Ver sanciones', group: 'Lectura' },
+  { id: 'audit.view', label: 'Ver registro', group: 'Lectura' },
+  { id: 'penalties.create', label: 'Crear sanciones', group: 'Sanciones' },
+  { id: 'penalties.delete', label: 'Borrar sanciones', group: 'Sanciones' },
+  { id: 'bans.create', label: 'Banear', group: 'Bans' },
+  { id: 'bans.revoke', label: 'Desbanear', group: 'Bans' },
+  { id: 'vehicles.garage', label: 'Mover a garaje', group: 'Vehículos' },
+  { id: 'vehicles.impound', label: 'Incautar', group: 'Vehículos' },
+  { id: 'vehicles.release', label: 'Liberar', group: 'Vehículos' },
+  { id: 'vehicles.give', label: 'Dar coches', group: 'Vehículos' },
+  { id: 'vehicles.delete', label: 'Quitar coches', group: 'Vehículos' },
+  { id: 'roles.manage', label: 'Gestionar permisos', group: 'Admin' },
+]
+
 /** Contrato que cumplen la API real (HttpApi) y la de demostración (DemoApi). */
 export interface UcpApi {
   loginUrl(): string
@@ -446,8 +489,16 @@ export interface UcpApi {
   staffPenalties(citizenid: string): Promise<StaffPenalty[]>
   staffAddPenalty(citizenid: string, penalty: NewPenalty): Promise<WriteResult>
   staffDeletePenalty(penaltyId: number): Promise<WriteResult>
+  staffCreateBan(citizenid: string, ban: NewBan): Promise<WriteResult>
+  staffRevokeBan(banId: number): Promise<WriteResult>
   staffUpdateVehicle(plate: string, update: { garage?: string; state?: number }): Promise<WriteResult>
+  staffDeleteVehicle(plate: string): Promise<WriteResult>
+  staffTransferVehicle(plate: string, citizenid: string): Promise<WriteResult>
   staffAudit(): Promise<AuditEntry[]>
+  staffGuildRoles(): Promise<GuildRole[]>
+  staffRoleGrants(): Promise<RoleGrant[]>
+  staffSetRoleGrant(roleId: string, grant: { perms: string[]; roleName?: string }): Promise<RoleGrant>
+  staffDeleteRoleGrant(roleId: string): Promise<void>
   logout(): Promise<void>
 }
 

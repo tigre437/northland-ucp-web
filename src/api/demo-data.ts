@@ -12,6 +12,7 @@ import type {
   Me,
   PlayerSearchResult,
   Property,
+  RoleGrant,
   ServerInfo,
   StaffPenalty,
   StaffPlayerDetail,
@@ -397,8 +398,8 @@ export const demoStaffPlayer: StaffPlayerDetail = {
   inPrison: true,
   prisonRemaining: 15,
   bans: [
-    { source: 'bans', reason: 'Cheating', bannedBy: 'Console', expiresAt: 0, active: true },
-    { source: 'qs_admin_bans', reason: 'RDM', bannedBy: 'Admin', expiresAt: null, active: true },
+    { id: null, source: 'bans', reason: 'Cheating', bannedBy: 'Console', createdAt: null, expiresAt: 0, active: true },
+    { id: 3, source: 'qs_admin_bans', reason: 'RDM', bannedBy: 'Admin', createdAt: 1761000000, expiresAt: null, active: true },
   ],
   lastLoggedOut: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
 }
@@ -420,6 +421,33 @@ export const demoStaffPenalties: StaffPenalty[] = [
     totalMonths: 0,
     charges: [{ label: 'Conducción temeraria', fine: 2500, months: 0 }],
     appliedAt: '2026-10-19',
+  },
+]
+
+export const demoGuildRoles = [
+  { id: '900', name: 'Owner', color: 0xc0392b, position: 10 },
+  { id: '800', name: 'Admin', color: 0xe67e22, position: 8 },
+  { id: '700', name: 'Moderador', color: 0x2980b9, position: 6 },
+  { id: '600', name: 'Helper', color: 0x27ae60, position: 4 },
+]
+
+export const demoRoleGrants: RoleGrant[] = [
+  {
+    id: 1,
+    roleId: '800',
+    roleName: 'Admin',
+    perms: [
+      'players.view', 'inventory.view', 'vehicles.view', 'penalties.view',
+      'audit.view', 'penalties.create', 'penalties.delete',
+      'vehicles.garage', 'vehicles.impound', 'vehicles.release',
+      'bans.create', 'bans.revoke',
+    ],
+  },
+  {
+    id: 2,
+    roleId: '700',
+    roleName: 'Moderador',
+    perms: ['players.view', 'vehicles.view', 'penalties.view', 'penalties.create'],
   },
 ]
 

@@ -7,13 +7,16 @@ import type {
   Character,
   CharacterRecord,
   Finances,
+  GuildRole,
   InventoryItem,
   Invoice,
   LicenseDoc,
   Me,
+  NewBan,
   NewPenalty,
   PlayerSearchResult,
   Property,
+  RoleGrant,
   ServerInfo,
   StaffPenalty,
   StaffPlayerDetail,
@@ -28,12 +31,14 @@ import {
   demoBusinesses,
   demoCharacters,
   demoFinances,
+  demoGuildRoles,
   demoInvoices,
   demoLicenses,
   demoMe,
   demoNotifications,
   demoProperties,
   demoRecords,
+  demoRoleGrants,
   demoServerInfo,
   demoStaffInventory,
   demoStaffPenalties,
@@ -189,6 +194,28 @@ export class DemoApi implements UcpApi {
     return { ok: true, id: penaltyId, message: null }
   }
 
+  async staffCreateBan(_citizenid: string, ban: NewBan): Promise<WriteResult> {
+    await latency()
+    const id = Date.now() % 100000
+    demoStaffPlayer.bans.unshift({
+      id,
+      source: 'qs_admin_bans',
+      reason: ban.reason,
+      bannedBy: 'Tigre437',
+      createdAt: Math.floor(Date.now() / 1000),
+      expiresAt: ban.expiresAt ?? null,
+      active: true,
+    })
+    return { ok: true, id, message: null }
+  }
+
+  async staffRevokeBan(banId: number): Promise<WriteResult> {
+    await latency()
+    const b = demoStaffPlayer.bans.find((x) => x.id === banId)
+    if (b) b.active = false
+    return { ok: true, id: banId, message: null }
+  }
+
   async staffUpdateVehicle(plate: string, update: { garage?: string; state?: number }): Promise<WriteResult> {
     await latency()
     const v = demoVehicles.find((x) => x.plate === plate)
@@ -199,9 +226,55 @@ export class DemoApi implements UcpApi {
     return { ok: true, id: null, message: null }
   }
 
+  async staffDeleteVehicle(plate: string): Promise<WriteResult> {
+    await latency()
+    const i = demoVehicles.findIndex((x) => x.plate === plate)
+    if (i >= 0) demoVehicles.splice(i, 1)
+    return { ok: true, id: null, message: null }
+  }
+
+  async staffTransferVehicle(plate: string, _citizenid: string): Promise<WriteResult> {
+    await latency()
+    return { ok: true, id: null, message: demoVehicles.some((x) => x.plate === plate) ? null : 'Vehículo no encontrado' }
+  }
+
   async staffAudit(): Promise<AuditEntry[]> {
     await latency()
     return demoAudit
+  }
+
+  async staffGuildRoles(): Promise<GuildRole[]> {
+    await latency()
+    return demoGuildRoles
+  }
+
+  async staffRoleGrants(): Promise<RoleGrant[]> {
+    await latency()
+    return demoRoleGrants
+  }
+
+  async staffSetRoleGrant(roleId: string, grant: { perms: string[]; roleName?: string }): Promise<RoleGrant> {
+    await latency()
+    const existing = demoRoleGrants.find((g) => g.roleId === roleId)
+    if (existing) {
+      existing.perms = [...grant.perms].sort()
+      if (grant.roleName) existing.roleName = grant.roleName
+      return existing
+    }
+    const g: RoleGrant = {
+      id: Date.now() % 100000,
+      roleId,
+      roleName: grant.roleName ?? null,
+      perms: [...grant.perms].sort(),
+    }
+    demoRoleGrants.push(g)
+    return g
+  }
+
+  async staffDeleteRoleGrant(roleId: string): Promise<void> {
+    await latency()
+    const i = demoRoleGrants.findIndex((g) => g.roleId === roleId)
+    if (i >= 0) demoRoleGrants.splice(i, 1)
   }
 
   async logout(): Promise<void> {

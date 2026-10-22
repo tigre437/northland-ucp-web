@@ -9,13 +9,16 @@ import type {
   Character,
   CharacterRecord,
   Finances,
+  GuildRole,
   InventoryItem,
   Invoice,
   LicenseDoc,
   Me,
+  NewBan,
   NewPenalty,
   PlayerSearchResult,
   Property,
+  RoleGrant,
   ServerInfo,
   StaffPenalty,
   StaffPlayerDetail,
@@ -170,6 +173,18 @@ export class HttpApi implements UcpApi {
     return this.request<WriteResult>(`/staff/penalties/${penaltyId}`, { method: 'DELETE' })
   }
 
+  staffCreateBan(citizenid: string, ban: NewBan): Promise<WriteResult> {
+    return this.request<WriteResult>(`/staff/players/${encodeURIComponent(citizenid)}/bans`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ban),
+    })
+  }
+
+  staffRevokeBan(banId: number): Promise<WriteResult> {
+    return this.request<WriteResult>(`/staff/bans/${banId}/revoke`, { method: 'POST' })
+  }
+
   staffUpdateVehicle(plate: string, update: { garage?: string; state?: number }): Promise<WriteResult> {
     return this.request<WriteResult>(`/staff/vehicles/${encodeURIComponent(plate)}`, {
       method: 'PATCH',
@@ -178,8 +193,42 @@ export class HttpApi implements UcpApi {
     })
   }
 
+  staffDeleteVehicle(plate: string): Promise<WriteResult> {
+    return this.request<WriteResult>(`/staff/vehicles/${encodeURIComponent(plate)}`, {
+      method: 'DELETE',
+    })
+  }
+
+  staffTransferVehicle(plate: string, citizenid: string): Promise<WriteResult> {
+    return this.request<WriteResult>(`/staff/vehicles/${encodeURIComponent(plate)}/transfer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ citizenid }),
+    })
+  }
+
   staffAudit(): Promise<AuditEntry[]> {
     return this.request<AuditEntry[]>('/staff/audit')
+  }
+
+  staffGuildRoles(): Promise<GuildRole[]> {
+    return this.request<GuildRole[]>('/staff/guild-roles')
+  }
+
+  staffRoleGrants(): Promise<RoleGrant[]> {
+    return this.request<RoleGrant[]>('/staff/roles')
+  }
+
+  staffSetRoleGrant(roleId: string, grant: { perms: string[]; roleName?: string }): Promise<RoleGrant> {
+    return this.request<RoleGrant>(`/staff/roles/${encodeURIComponent(roleId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(grant),
+    })
+  }
+
+  async staffDeleteRoleGrant(roleId: string): Promise<void> {
+    await this.request(`/staff/roles/${encodeURIComponent(roleId)}`, { method: 'DELETE' })
   }
 
   async logout(): Promise<void> {

@@ -1,8 +1,20 @@
-import { Ban, Car, Gavel, Package, Plus, ScrollText, Search, ShieldCheck, Trash2 } from 'lucide-react'
+import {
+  Ban,
+  Car,
+  Gavel,
+  KeyRound,
+  Package,
+  Plus,
+  ScrollText,
+  Search,
+  ShieldCheck,
+  Trash2,
+  UserPlus,
+} from 'lucide-react'
 import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api } from '@/api'
+import { api, STAFF_PERMS } from '@/api'
 import type { StaffPlayerDetail } from '@/api'
 import {
   useMe,
@@ -17,14 +29,20 @@ import { formatDateTime, formatMoney, relativeTime, VEHICLE_STATE_LABEL } from '
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/feedback'
 import { Badge, Card, KeyVal, PageHeader, SectionTitle } from '@/components/ui/surfaces'
 
-type Tab = 'resumen' | 'sanciones' | 'inventario' | 'vehiculos'
+type Tab = 'resumen' | 'sanciones' | 'inventario' | 'vehiculos' | 'permisos'
+
+const inputCls =
+  'rounded-md border border-line bg-card-hover px-2 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none'
+const btnCls =
+  'rounded-md border border-line px-2 py-1 text-xs text-ink-dim transition-colors hover:bg-card-hover disabled:opacity-50'
 
 export function StaffPage() {
   const { data: me } = useMe()
+  const perms = new Set(me?.staffPermissions ?? [])
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('resumen')
-  const search = useStaffSearch(me?.staff ? q : '')
+  const search = useStaffSearch(perms.has('players.view') ? q : '')
 
   if (me && !me.staff) {
     return (
@@ -40,10 +58,10 @@ export function StaffPage() {
     <div className="space-y-6">
       <PageHeader
         title="Panel de staff"
-        subtitle="Búsqueda y gestión de jugadores: sanciones, inventario y vehículos."
+        subtitle="Búsqueda y gestión de jugadores: sanciones, inventario, vehículos y permisos."
       />
 
-      {/* Búsqueda */}
+      {perms.has('players.view') && (
       <Card className="p-4">
         <label htmlFor="staff-search" className="kicker mb-2 block">
           Buscar jugador
@@ -56,7 +74,7 @@ export function StaffPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Nombre, citizenid o cuenta…"
-            className="w-full rounded-md border border-line bg-card-hover py-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+            className={`w-full py-2 pl-9 pr-3 ${inputCls}`}
           />
         </div>
 
@@ -94,18 +112,20 @@ export function StaffPage() {
           </div>
         )}
       </Card>
+      )}
 
       {selected ? (
-        <PlayerPanel citizenid={selected} tab={tab} onTab={setTab} />
-      ) : (
+        <PlayerPanel citizenid={selected} tab={tab} onTab={setTab} perms={perms} />
+      ) : !perms.has('roles.manage') ? (
         <EmptyState
           icon={<ShieldCheck size={30} />}
           title="Selecciona un jugador"
           description="Busca un personaje para ver su ficha completa, inventario, vehículos y sanciones."
         />
-      )}
+      ) : null}
 
-      <AuditSection active={!selected} />
+      <PermsSection perms={perms} />
+      <AuditSection active={perms.has('audit.view')} />
     </div>
   )
 }
@@ -114,19 +134,22 @@ function PlayerPanel({
   citizenid,
   tab,
   onTab,
+  perms,
 }: {
   citizenid: string
   tab: Tab
   onTab: (t: Tab) => void
+  perms: Set<string>
 }) {
   const detail = useStaffPlayer(citizenid)
 
-  const tabs: { id: Tab; label: string; icon: typeof Gavel }[] = [
-    { id: 'resumen', label: 'Resumen', icon: ShieldCheck },
-    { id: 'sanciones', label: 'Sanciones', icon: Gavel },
-    { id: 'inventario', label: 'Inventario', icon: Package },
-    { id: 'vehiculos', label: 'Vehículos', icon: Car },
+  const allTabs: { id: Tab; label: string; icon: typeof Gavel; perm: string }[] = [
+    { id: 'resumen', label: 'Resumen', icon: ShieldCheck, perm: 'players.view' },
+    { id: 'sanciones', label: 'Sanciones', icon: Gavel, perm: 'penalties.view' },
+    { id: 'inventario', label: 'Inventario', icon: Package, perm: 'inventory.view' },
+    { id: 'vehiculos', label: 'Vehículos', icon: Car, perm: 'vehicles.view' },
   ]
+  const tabs = allTabs.filter((t) => perms.has(t.perm))
 
   return (
     <section aria-label={`Ficha de ${citizenid}`} className="space-y-4">
@@ -138,31 +161,36 @@ function PlayerPanel({
         <PlayerHeader player={detail.data} />
       ) : null}
 
-      {/* Pestañas */}
-      <div className="flex gap-1 border-b border-line-soft" role="tablist">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => onTab(id)}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-              tab === id
-                ? 'border-accent text-accent-strong'
-                : 'border-transparent text-ink-dim hover:text-ink'
-            }`}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
-      </div>
+      {tabs.length > 1 && (
+        <div className="flex gap-1 border-b border-line-soft" role="tablist">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => onTab(id)}
+              className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+                tab === id
+                  ? 'border-accent text-accent-strong'
+                  : 'border-transparent text-ink-dim hover:text-ink'
+              }`}
+            >
+              <Icon size={14} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {tab === 'resumen' && detail.data && <SummaryTab player={detail.data} />}
-      {tab === 'sanciones' && <PenaltiesTab citizenid={citizenid} />}
-      {tab === 'inventario' && <InventoryTab citizenid={citizenid} />}
-      {tab === 'vehiculos' && <VehiclesTab citizenid={citizenid} />}
+      {tab === 'resumen' && detail.data && <SummaryTab player={detail.data} perms={perms} />}
+      {tab === 'sanciones' && perms.has('penalties.view') && (
+        <PenaltiesTab citizenid={citizenid} perms={perms} />
+      )}
+      {tab === 'inventario' && perms.has('inventory.view') && <InventoryTab citizenid={citizenid} />}
+      {tab === 'vehiculos' && perms.has('vehicles.view') && (
+        <VehiclesTab citizenid={citizenid} perms={perms} />
+      )}
     </section>
   )
 }
@@ -194,7 +222,44 @@ function PlayerHeader({ player: p }: { player: StaffPlayerDetail }) {
   )
 }
 
-function SummaryTab({ player: p }: { player: StaffPlayerDetail }) {
+function SummaryTab({ player: p, perms }: { player: StaffPlayerDetail; perms: Set<string> }) {
+  const queryClient = useQueryClient()
+  const [banForm, setBanForm] = useState({ reason: '', days: '' })
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ['staff-player', p.citizenid] })
+
+  async function submitBan(e: React.FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      const days = Number(banForm.days)
+      await api.staffCreateBan(p.citizenid, {
+        reason: banForm.reason,
+        expiresAt: days > 0 ? Math.floor(Date.now() / 1000) + days * 86400 : null,
+      })
+      setBanForm({ reason: '', days: '' })
+      await invalidate()
+    } catch {
+      setError('No se pudo banear (¿escritura no configurada?)')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function revoke(banId: number) {
+    setBusy(true)
+    try {
+      await api.staffRevokeBan(banId)
+      await invalidate()
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <Card className="p-5">
       <SectionTitle>Identidad</SectionTitle>
@@ -204,34 +269,62 @@ function SummaryTab({ player: p }: { player: StaffPlayerDetail }) {
         <KeyVal label="Teléfono" value={p.phone ?? '—'} />
         <KeyVal label="Trabajo" value={`${p.jobLabel ?? '—'} (${p.jobGrade ?? '—'})`} />
       </dl>
-      {p.bans.length > 0 && (
-        <>
-          <SectionTitle>
-            <span className="mt-4 inline-flex items-center gap-2">
-              <Ban size={14} /> Bans
+
+      <SectionTitle>
+        <span className="mt-4 inline-flex items-center gap-2">
+          <Ban size={14} /> Bans
+        </span>
+      </SectionTitle>
+      {p.bans.length === 0 && <p className="text-sm text-ink-faint">Sin bans registrados.</p>}
+      {p.bans.map((b, i) => (
+        <div key={b.id ?? i} className="flex items-center gap-2 py-1.5 text-sm">
+          <span className="flex-1 text-ink">
+            {b.reason ?? '—'}
+            <span className="ml-2 text-xs text-ink-faint">
+              {b.source === 'bans' ? 'qbox' : 'qs-admin'} · por {b.bannedBy ?? '—'}
             </span>
-          </SectionTitle>
-          {p.bans.map((b, i) => (
-            <KeyVal
-              key={i}
-              label={b.source === 'bans' ? 'Bans (qbox)' : 'Bans (qs-admin)'}
-              value={
-                <span className="inline-flex items-center gap-2">
-                  {b.reason ?? '—'} · por {b.bannedBy ?? '—'}
-                  <Badge tone={b.active ? 'danger' : 'neutral'}>{b.active ? 'Activo' : 'Revocado'}</Badge>
-                </span>
-              }
+          </span>
+          <Badge tone={b.active ? 'danger' : 'neutral'}>{b.active ? 'Activo' : 'Revocado'}</Badge>
+          {perms.has('bans.revoke') && b.source === 'qs_admin_bans' && b.active && b.id != null && (
+            <button type="button" className={btnCls} disabled={busy} onClick={() => void revoke(b.id!)}>
+              Desbanear
+            </button>
+          )}
+        </div>
+      ))}
+
+      {perms.has('bans.create') && (
+        <form onSubmit={submitBan} className="mt-3 flex flex-wrap items-end gap-3">
+          <label className="min-w-52 flex-1 text-xs text-ink-faint">
+            Motivo del ban
+            <input
+              type="text" required value={banForm.reason}
+              onChange={(e) => setBanForm({ ...banForm, reason: e.target.value })}
+              placeholder="RDM, cheating…"
+              className={`mt-1 block w-full ${inputCls}`}
             />
-          ))}
-        </>
+          </label>
+          <label className="text-xs text-ink-faint">
+            Días (vacío = permanente)
+            <input
+              type="number" min="0" value={banForm.days}
+              onChange={(e) => setBanForm({ ...banForm, days: e.target.value })}
+              className={`mt-1 block w-24 ${inputCls}`}
+            />
+          </label>
+          <button type="submit" disabled={busy} className={btnCls}>
+            Banear
+          </button>
+        </form>
       )}
+      {error && <p className="mt-2 text-xs text-danger-strong">{error}</p>}
     </Card>
   )
 }
 
-function PenaltiesTab({ citizenid }: { citizenid: string }) {
-  const { data: me } = useMe()
-  const canMutate = me?.staffPermissions?.includes('sanctions') ?? false
+function PenaltiesTab({ citizenid, perms }: { citizenid: string; perms: Set<string> }) {
+  const canCreate = perms.has('penalties.create')
+  const canDelete = perms.has('penalties.delete')
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useStaffPenalties(citizenid)
   const [form, setForm] = useState({ fine: '500', months: '0', charges: '', job: 'police' })
@@ -278,53 +371,51 @@ function PenaltiesTab({ citizenid }: { citizenid: string }) {
 
   return (
     <div className="space-y-4">
-      {canMutate && (
-      <Card className="p-4">
-        <SectionTitle>
-          <span className="inline-flex items-center gap-2">
-            <Plus size={14} /> Nueva sanción
-          </span>
-        </SectionTitle>
-        <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
-          <label className="text-xs text-ink-faint">
-            Multa ($)
-            <input
-              type="number" min="0" required value={form.fine}
-              onChange={(e) => setForm({ ...form, fine: e.target.value })}
-              className="mt-1 block w-28 rounded-md border border-line bg-card-hover px-2 py-1.5 text-sm text-ink"
-            />
-          </label>
-          <label className="text-xs text-ink-faint">
-            Meses
-            <input
-              type="number" min="0" value={form.months}
-              onChange={(e) => setForm({ ...form, months: e.target.value })}
-              className="mt-1 block w-20 rounded-md border border-line bg-card-hover px-2 py-1.5 text-sm text-ink"
-            />
-          </label>
-          <label className="min-w-52 flex-1 text-xs text-ink-faint">
-            Cargos (separados por coma)
-            <input
-              type="text" required value={form.charges}
-              onChange={(e) => setForm({ ...form, charges: e.target.value })}
-              placeholder="Conducción temeraria, resistencia"
-              className="mt-1 block w-full rounded-md border border-line bg-card-hover px-2 py-1.5 text-sm text-ink"
-            />
-          </label>
-          <button
-            type="submit" disabled={busy}
-            className="rounded-md border border-accent-deep/60 bg-accent-deep/25 px-3 py-1.5 text-sm font-medium text-accent-strong transition-colors hover:bg-accent-deep/40 disabled:opacity-50"
-          >
-            Aplicar
-          </button>
-        </form>
-        {error && <p className="mt-2 text-xs text-danger-strong">{error}</p>}
-      </Card>
+      {canCreate && (
+        <Card className="p-4">
+          <SectionTitle>
+            <span className="inline-flex items-center gap-2">
+              <Plus size={14} /> Nueva sanción
+            </span>
+          </SectionTitle>
+          <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+            <label className="text-xs text-ink-faint">
+              Multa ($)
+              <input
+                type="number" min="0" required value={form.fine}
+                onChange={(e) => setForm({ ...form, fine: e.target.value })}
+                className={`mt-1 block w-28 ${inputCls}`}
+              />
+            </label>
+            <label className="text-xs text-ink-faint">
+              Meses
+              <input
+                type="number" min="0" value={form.months}
+                onChange={(e) => setForm({ ...form, months: e.target.value })}
+                className={`mt-1 block w-20 ${inputCls}`}
+              />
+            </label>
+            <label className="min-w-52 flex-1 text-xs text-ink-faint">
+              Cargos (separados por coma)
+              <input
+                type="text" required value={form.charges}
+                onChange={(e) => setForm({ ...form, charges: e.target.value })}
+                placeholder="Conducción temeraria, resistencia"
+                className={`mt-1 block w-full ${inputCls}`}
+              />
+            </label>
+            <button
+              type="submit" disabled={busy}
+              className="rounded-md border border-accent-deep/60 bg-accent-deep/25 px-3 py-1.5 text-sm font-medium text-accent-strong transition-colors hover:bg-accent-deep/40 disabled:opacity-50"
+            >
+              Aplicar
+            </button>
+          </form>
+          {error && <p className="mt-2 text-xs text-danger-strong">{error}</p>}
+        </Card>
       )}
-      {!canMutate && (
-        <p className="text-xs text-ink-faint">
-          Tu rol permite ver sanciones, no modificarlas.
-        </p>
+      {!canCreate && !canDelete && (
+        <p className="text-xs text-ink-faint">Tu rol permite ver sanciones, no modificarlas.</p>
       )}
 
       {isLoading ? (
@@ -349,14 +440,14 @@ function PenaltiesTab({ citizenid }: { citizenid: string }) {
               <span className="text-sm font-medium text-ink">{formatMoney(p.totalFine)}</span>
               {p.totalMonths > 0 && <Badge tone="danger">{p.totalMonths} meses</Badge>}
               <Badge tone={p.payed ? 'accent' : 'warm'}>{p.payed ? 'Pagada' : 'Pendiente'}</Badge>
-              {canMutate && (
-              <button
-                type="button" onClick={() => void remove(p.id)} disabled={busy}
-                aria-label={`Eliminar sanción ${p.id}`}
-                className="rounded-md p-1.5 text-ink-faint transition-colors hover:bg-rust-500/15 hover:text-danger-strong disabled:opacity-50"
-              >
-                <Trash2 size={15} />
-              </button>
+              {canDelete && (
+                <button
+                  type="button" onClick={() => void remove(p.id)} disabled={busy}
+                  aria-label={`Eliminar sanción ${p.id}`}
+                  className="rounded-md p-1.5 text-ink-faint transition-colors hover:bg-rust-500/15 hover:text-danger-strong disabled:opacity-50"
+                >
+                  <Trash2 size={15} />
+                </button>
               )}
             </Card>
           ))}
@@ -410,18 +501,45 @@ function InventoryTab({ citizenid }: { citizenid: string }) {
   )
 }
 
-function VehiclesTab({ citizenid }: { citizenid: string }) {
-  const { data: me } = useMe()
-  const canMutate = me?.staffPermissions?.includes('vehicles') ?? false
+function VehiclesTab({ citizenid, perms }: { citizenid: string; perms: Set<string> }) {
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useStaffVehicles(citizenid)
   const [busy, setBusy] = useState<string | null>(null)
+  const [transferTo, setTransferTo] = useState<Record<string, string>>({})
+
+  const can = (p: string) => perms.has(p)
+  const anyMutation = ['vehicles.garage', 'vehicles.impound', 'vehicles.release', 'vehicles.give', 'vehicles.delete'].some(can)
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ['staff-vehicles', citizenid] })
 
   async function setState(plate: string, state: number, garage?: string) {
     setBusy(plate)
     try {
       await api.staffUpdateVehicle(plate, { state, ...(garage ? { garage } : {}) })
-      await queryClient.invalidateQueries({ queryKey: ['staff-vehicles', citizenid] })
+      await invalidate()
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function transfer(plate: string) {
+    const cid = transferTo[plate]?.trim()
+    if (!cid) return
+    setBusy(plate)
+    try {
+      await api.staffTransferVehicle(plate, cid)
+      await invalidate()
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function remove(plate: string) {
+    setBusy(plate)
+    try {
+      await api.staffDeleteVehicle(plate)
+      await invalidate()
     } finally {
       setBusy(null)
     }
@@ -438,52 +556,208 @@ function VehiclesTab({ citizenid }: { citizenid: string }) {
       ) : (
         <div className="space-y-2">
           {data.map((v) => (
-            <Card key={v.id} className="flex flex-wrap items-center gap-3 p-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-ink">
-                  {v.tag ? `${v.tag} (${v.model})` : v.model}
-                  <span className="ml-2 font-mono text-xs text-ink-faint">{v.plate}</span>
-                </p>
-                <p className="text-xs text-ink-faint">{v.garage ?? '—'}</p>
+            <Card key={v.id} className="p-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-ink">
+                    {v.tag ? `${v.tag} (${v.model})` : v.model}
+                    <span className="ml-2 font-mono text-xs text-ink-faint">{v.plate}</span>
+                  </p>
+                  <p className="text-xs text-ink-faint">{v.garage ?? '—'}</p>
+                </div>
+                <Badge tone={v.state === 'impound' ? 'danger' : v.state === 'garage' ? 'accent' : 'neutral'}>
+                  {VEHICLE_STATE_LABEL[v.state]}
+                </Badge>
               </div>
-              <Badge tone={v.state === 'impound' ? 'danger' : v.state === 'garage' ? 'accent' : 'neutral'}>
-                {VEHICLE_STATE_LABEL[v.state]}
-              </Badge>
-              {canMutate && (
-              <div className="flex gap-1.5">
-                <button
-                  type="button" disabled={busy === v.plate}
-                  onClick={() => void setState(v.plate, 1)}
-                  className="rounded-md border border-line px-2 py-1 text-xs text-ink-dim transition-colors hover:bg-card-hover disabled:opacity-50"
-                >
-                  A garaje
-                </button>
-                <button
-                  type="button" disabled={busy === v.plate}
-                  onClick={() => void setState(v.plate, 2)}
-                  className="rounded-md border border-line px-2 py-1 text-xs text-ink-dim transition-colors hover:bg-card-hover disabled:opacity-50"
-                >
-                  Incautar
-                </button>
-                <button
-                  type="button" disabled={busy === v.plate}
-                  onClick={() => void setState(v.plate, 0)}
-                  className="rounded-md border border-line px-2 py-1 text-xs text-ink-dim transition-colors hover:bg-card-hover disabled:opacity-50"
-                >
-                  Liberar
-                </button>
-              </div>
+              {anyMutation && (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-line-soft pt-2">
+                  {can('vehicles.garage') && (
+                    <button type="button" className={btnCls} disabled={busy === v.plate} onClick={() => void setState(v.plate, 1)}>
+                      A garaje
+                    </button>
+                  )}
+                  {can('vehicles.impound') && (
+                    <button type="button" className={btnCls} disabled={busy === v.plate} onClick={() => void setState(v.plate, 2)}>
+                      Incautar
+                    </button>
+                  )}
+                  {can('vehicles.release') && (
+                    <button type="button" className={btnCls} disabled={busy === v.plate} onClick={() => void setState(v.plate, 0)}>
+                      Liberar
+                    </button>
+                  )}
+                  {can('vehicles.give') && (
+                    <span className="inline-flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={transferTo[v.plate] ?? ''}
+                        onChange={(e) => setTransferTo({ ...transferTo, [v.plate]: e.target.value })}
+                        placeholder="citizenid destino"
+                        className={`w-36 ${inputCls}`}
+                      />
+                      <button
+                        type="button" className={btnCls} disabled={busy === v.plate}
+                        onClick={() => void transfer(v.plate)}
+                      >
+                        <UserPlus size={13} className="mr-0.5 inline" /> Dar
+                      </button>
+                    </span>
+                  )}
+                  {can('vehicles.delete') && (
+                    <button
+                      type="button"
+                      className={`${btnCls} border-rust-500/50 text-danger-strong hover:bg-rust-500/15`}
+                      disabled={busy === v.plate}
+                      onClick={() => {
+                        if (window.confirm(`¿Quitar el vehículo ${v.plate} al jugador? No se puede deshacer.`)) {
+                          void remove(v.plate)
+                        }
+                      }}
+                    >
+                      <Trash2 size={12} className="mr-0.5 inline" /> Quitar
+                    </button>
+                  )}
+                </div>
               )}
             </Card>
           ))}
         </div>
       )}
-      {!canMutate && data && data.length > 0 && (
+      {!anyMutation && data && data.length > 0 && (
         <p className="mt-2 text-xs text-ink-faint">
-          Tu rol permite ver vehículos, no moverlos de garaje.
+          Tu rol permite ver vehículos, no modificarlos.
         </p>
       )}
     </div>
+  )
+}
+
+/** Editor de la matriz rol de Discord → permisos de staff. */
+function PermsSection({ perms }: { perms: Set<string> }) {
+  const enabled = perms.has('roles.manage')
+  const queryClient = useQueryClient()
+  const [dirty, setDirty] = useState<Record<string, Set<string>>>({})
+  const [saving, setSaving] = useState<string | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  const guildRoles = useQuery({
+    queryKey: ['staff-guild-roles'] as const,
+    queryFn: () => api.staffGuildRoles(),
+    enabled,
+    retry: false,
+  })
+  const grants = useQuery({
+    queryKey: ['staff-role-grants'] as const,
+    queryFn: () => api.staffRoleGrants(),
+    enabled,
+  })
+
+  if (!enabled) return null
+
+  const groups = [...new Set(STAFF_PERMS.map((p) => p.group))]
+
+  function permsOf(roleId: string): Set<string> {
+    if (dirty[roleId]) return dirty[roleId]
+    const g = grants.data?.find((x) => x.roleId === roleId)
+    return new Set(g?.perms ?? [])
+  }
+
+  function toggle(roleId: string, perm: string) {
+    const next = new Set(permsOf(roleId))
+    if (next.has(perm)) next.delete(perm)
+    else next.add(perm)
+    setDirty({ ...dirty, [roleId]: next })
+  }
+
+  async function save(roleId: string, roleName: string | null) {
+    setSaving(roleId)
+    setMsg(null)
+    try {
+      await api.staffSetRoleGrant(roleId, { perms: [...permsOf(roleId)], roleName: roleName ?? undefined })
+      const next = { ...dirty }
+      delete next[roleId]
+      setDirty(next)
+      await queryClient.invalidateQueries({ queryKey: ['staff-role-grants'] })
+      setMsg(`Permisos de «${roleName ?? roleId}» guardados.`)
+    } catch {
+      setMsg('No se pudieron guardar los permisos.')
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const allRoles = [
+    ...(guildRoles.data ?? []).map((r) => ({ roleId: r.id, roleName: r.name })),
+    ...(grants.data ?? [])
+      .filter((g) => !(guildRoles.data ?? []).some((r) => r.id === g.roleId))
+      .map((g) => ({ roleId: g.roleId, roleName: g.roleName ?? g.roleId })),
+  ]
+
+  return (
+    <section aria-label="Permisos de roles" className="space-y-3">
+      <SectionTitle>
+        <span className="inline-flex items-center gap-2">
+          <KeyRound size={14} /> Permisos por rol de Discord
+        </span>
+      </SectionTitle>
+      <Card className="p-4">
+        {guildRoles.isError && (
+          <p className="mb-3 text-xs text-warm-strong">
+            No se pudo leer la lista de roles del Discord (¿bot sin configurar?) — se muestran solo
+            los roles ya asignados.
+          </p>
+        )}
+        {allRoles.length === 0 && !guildRoles.isLoading ? (
+          <p className="text-sm text-ink-faint">
+            Sin roles disponibles. Configura el bot de Discord o asigna roles manualmente.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {allRoles.map(({ roleId, roleName }) => {
+              const current = permsOf(roleId)
+              const isDirty = roleId in dirty
+              return (
+                <div key={roleId} className="border-b border-line-soft pb-4 last:border-0 last:pb-0">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="text-sm font-medium text-ink">{roleName}</span>
+                    <span className="font-mono text-xs text-ink-faint">{roleId}</span>
+                    {isDirty && (
+                      <button
+                        type="button"
+                        onClick={() => void save(roleId, roleName)}
+                        disabled={saving === roleId}
+                        className="ml-auto rounded-md border border-accent-deep/60 bg-accent-deep/25 px-2.5 py-1 text-xs font-medium text-accent-strong hover:bg-accent-deep/40 disabled:opacity-50"
+                      >
+                        {saving === roleId ? 'Guardando…' : 'Guardar'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                    {groups.map((group) => (
+                      <div key={group}>
+                        <p className="kicker mb-1">{group}</p>
+                        {STAFF_PERMS.filter((p) => p.group === group).map((p) => (
+                          <label key={p.id} className="flex cursor-pointer items-center gap-2 py-0.5 text-sm text-ink-dim">
+                            <input
+                              type="checkbox"
+                              checked={current.has(p.id)}
+                              onChange={() => toggle(roleId, p.id)}
+                              className="h-3.5 w-3.5 rounded border-line accent-olive-400"
+                            />
+                            {p.label}
+                          </label>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        {msg && <p className="mt-3 text-xs text-ink-faint">{msg}</p>}
+      </Card>
+    </section>
   )
 }
 
