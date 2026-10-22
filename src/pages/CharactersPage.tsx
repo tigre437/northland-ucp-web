@@ -33,7 +33,7 @@ export function CharactersPage() {
             <Link key={c.citizenid} to={`/personajes/${c.citizenid}`}>
               <Card className="flex h-full flex-col p-4 transition-colors hover:bg-card-hover">
                 <div className="flex items-center gap-3">
-                  <Avatar url={null} name={fullName(c.firstname, c.lastname)} size="lg" />
+                  <Avatar url={c.photoUrl} name={fullName(c.firstname, c.lastname)} size="lg" />
                   <div className="min-w-0">
                     <p className="truncate font-display font-semibold text-ink">
                       {fullName(c.firstname, c.lastname)}

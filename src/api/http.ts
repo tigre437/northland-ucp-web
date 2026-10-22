@@ -2,11 +2,19 @@ import { env } from '@/config/env'
 
 import { ApiError } from './types'
 import type {
+  ActivityStats,
+  Agency,
+  Business,
   Character,
+  CharacterRecord,
+  Finances,
+  Invoice,
+  LicenseDoc,
   Me,
   Property,
   ServerInfo,
   UcpApi,
+  UcpNotification,
   Vehicle,
 } from './types'
 
@@ -83,6 +91,38 @@ export class HttpApi implements UcpApi {
 
   getVehicles(): Promise<Vehicle[]> {
     return this.request<Vehicle[]>('/vehicles')
+  }
+
+  getInvoices(): Promise<Invoice[]> {
+    return this.request<Invoice[]>('/billing/invoices')
+  }
+
+  getFinances(): Promise<Finances> {
+    return this.request<Finances>('/billing/finances')
+  }
+
+  getRecords(): Promise<CharacterRecord[]> {
+    return this.request<CharacterRecord[]>('/records')
+  }
+
+  getLicenses(): Promise<LicenseDoc[]> {
+    return this.request<LicenseDoc[]>('/licenses')
+  }
+
+  getBusinesses(): Promise<Business[]> {
+    return this.request<Business[]>('/businesses')
+  }
+
+  getAgencies(): Promise<Agency[]> {
+    return this.request<Agency[]>('/agencies')
+  }
+
+  getStats(): Promise<ActivityStats> {
+    return this.request<ActivityStats>('/stats')
+  }
+
+  getNotifications(): Promise<UcpNotification[]> {
+    return this.request<UcpNotification[]>('/notifications')
   }
 
   getServerInfo(): Promise<ServerInfo> {

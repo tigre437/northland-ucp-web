@@ -1,7 +1,14 @@
-import { ArrowRight, Car, Home, Link2Off, Server, Users } from 'lucide-react'
+import { ArrowRight, Bell, Car, Home, Link2Off, Server, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import { useCharacters, useMe, useProperties, useServerInfo, useVehicles } from '@/hooks/api'
+import {
+  useCharacters,
+  useMe,
+  useNotifications,
+  useProperties,
+  useServerInfo,
+  useVehicles,
+} from '@/hooks/api'
 import { formatMoney, fullName, relativeTime } from '@/lib/format'
 import { ErrorState, Skeleton } from '@/components/ui/feedback'
 import { Avatar, Badge, Card, PageHeader, SectionTitle, Stat } from '@/components/ui/surfaces'
@@ -11,6 +18,7 @@ export function DashboardPage() {
   const characters = useCharacters()
   const properties = useProperties()
   const vehicles = useVehicles()
+  const notifications = useNotifications()
   const server = useServerInfo()
 
   const displayName = me.data?.discord.globalName ?? me.data?.discord.username ?? 'jugador'
@@ -40,6 +48,43 @@ export function DashboardPage() {
             </p>
           </div>
         </Card>
+      )}
+
+      {/* Avisos */}
+      {notifications.data && notifications.data.length > 0 && (
+        <section aria-label="Avisos">
+          <div className="space-y-2">
+            {notifications.data.map((n, i) => (
+              <Link key={i} to={n.href ?? '/'} className="block">
+                <Card
+                  className={`flex items-start gap-3 p-3.5 transition-colors hover:bg-card-hover ${
+                    n.severity === 'alert'
+                      ? 'border-rust-500/40 bg-rust-500/10'
+                      : n.severity === 'warn'
+                        ? 'border-brand-600/40 bg-brand-600/10'
+                        : ''
+                  }`}
+                >
+                  <Bell
+                    size={16}
+                    className={`mt-0.5 shrink-0 ${
+                      n.severity === 'alert'
+                        ? 'text-danger-strong'
+                        : n.severity === 'warn'
+                          ? 'text-warm-strong'
+                          : 'text-accent-strong'
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1 text-sm">
+                    <p className="font-medium text-ink">{n.title}</p>
+                    {n.description && <p className="mt-0.5 text-ink-dim">{n.description}</p>}
+                  </div>
+                  <ArrowRight size={14} className="mt-1 shrink-0 text-ink-faint" />
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Resumen */}
@@ -92,7 +137,7 @@ export function DashboardPage() {
             {chars.slice(0, 4).map((c) => (
               <Link key={c.citizenid} to={`/personajes/${c.citizenid}`}>
                 <Card className="flex h-full items-center gap-3 p-4 transition-colors hover:bg-card-hover">
-                  <Avatar url={null} name={fullName(c.firstname, c.lastname)} />
+                  <Avatar url={c.photoUrl} name={fullName(c.firstname, c.lastname)} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-display font-semibold text-ink">
                       {fullName(c.firstname, c.lastname)}

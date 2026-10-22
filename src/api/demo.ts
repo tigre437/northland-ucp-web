@@ -1,17 +1,33 @@
 import { ApiError } from './types'
 import type {
+  ActivityStats,
+  Agency,
+  Business,
   Character,
+  CharacterRecord,
+  Finances,
+  Invoice,
+  LicenseDoc,
   Me,
   Property,
   ServerInfo,
   UcpApi,
+  UcpNotification,
   Vehicle,
 } from './types'
 import {
+  demoAgencies,
+  demoBusinesses,
   demoCharacters,
+  demoFinances,
+  demoInvoices,
+  demoLicenses,
   demoMe,
+  demoNotifications,
   demoProperties,
+  demoRecords,
   demoServerInfo,
+  demoStats,
   demoVehicles,
 } from './demo-data'
 
@@ -59,6 +75,46 @@ export class DemoApi implements UcpApi {
   async getVehicles(): Promise<Vehicle[]> {
     await latency()
     return demoVehicles
+  }
+
+  async getInvoices(): Promise<Invoice[]> {
+    await latency()
+    return demoInvoices
+  }
+
+  async getFinances(): Promise<Finances> {
+    await latency()
+    return demoFinances
+  }
+
+  async getRecords(): Promise<CharacterRecord[]> {
+    await latency()
+    return demoRecords
+  }
+
+  async getLicenses(): Promise<LicenseDoc[]> {
+    await latency()
+    return demoLicenses
+  }
+
+  async getBusinesses(): Promise<Business[]> {
+    await latency()
+    return demoBusinesses
+  }
+
+  async getAgencies(): Promise<Agency[]> {
+    await latency()
+    return demoAgencies
+  }
+
+  async getStats(): Promise<ActivityStats> {
+    await latency()
+    return demoStats
+  }
+
+  async getNotifications(): Promise<UcpNotification[]> {
+    await latency()
+    return demoNotifications
   }
 
   async getServerInfo(): Promise<ServerInfo> {

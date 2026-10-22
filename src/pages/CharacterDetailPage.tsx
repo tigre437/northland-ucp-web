@@ -48,7 +48,7 @@ export function CharacterDetailPage() {
 
       {/* Cabecera */}
       <Card className="flex flex-wrap items-center gap-4 p-5">
-        <Avatar url={null} name={fullName(c.firstname, c.lastname)} size="lg" />
+        <Avatar url={c.photoUrl} name={fullName(c.firstname, c.lastname)} size="lg" />
         <div className="min-w-0 flex-1">
           <h1 className="panel-title text-xl">{fullName(c.firstname, c.lastname)}</h1>
           <p className="font-mono text-xs text-ink-faint">{c.citizenid}</p>

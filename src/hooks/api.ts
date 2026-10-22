@@ -34,6 +34,38 @@ export function useVehicles() {
   return useQuery({ queryKey: queryKeys.vehicles, queryFn: () => api.getVehicles(), retry: sessionRetry })
 }
 
+export function useInvoices() {
+  return useQuery({ queryKey: queryKeys.invoices, queryFn: () => api.getInvoices(), retry: sessionRetry })
+}
+
+export function useFinances() {
+  return useQuery({ queryKey: queryKeys.finances, queryFn: () => api.getFinances(), retry: sessionRetry })
+}
+
+export function useRecords() {
+  return useQuery({ queryKey: queryKeys.records, queryFn: () => api.getRecords(), retry: sessionRetry })
+}
+
+export function useLicenses() {
+  return useQuery({ queryKey: queryKeys.licenses, queryFn: () => api.getLicenses(), retry: sessionRetry })
+}
+
+export function useBusinesses() {
+  return useQuery({ queryKey: queryKeys.businesses, queryFn: () => api.getBusinesses(), retry: sessionRetry })
+}
+
+export function useAgencies() {
+  return useQuery({ queryKey: queryKeys.agencies, queryFn: () => api.getAgencies(), retry: sessionRetry })
+}
+
+export function useStats() {
+  return useQuery({ queryKey: queryKeys.stats, queryFn: () => api.getStats(), retry: sessionRetry })
+}
+
+export function useNotifications() {
+  return useQuery({ queryKey: queryKeys.notifications, queryFn: () => api.getNotifications(), retry: sessionRetry })
+}
+
 export function useServerInfo() {
   return useQuery({ queryKey: queryKeys.serverInfo, queryFn: () => api.getServerInfo(), retry: sessionRetry })
 }

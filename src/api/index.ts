@@ -18,5 +18,13 @@ export const queryKeys = {
   character: (citizenid: string) => ['characters', citizenid] as const,
   properties: ['properties'] as const,
   vehicles: ['vehicles'] as const,
+  invoices: ['invoices'] as const,
+  finances: ['finances'] as const,
+  records: ['records'] as const,
+  licenses: ['licenses'] as const,
+  businesses: ['businesses'] as const,
+  agencies: ['agencies'] as const,
+  stats: ['stats'] as const,
+  notifications: ['notifications'] as const,
   serverInfo: ['server-info'] as const,
 }

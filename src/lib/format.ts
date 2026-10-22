@@ -57,3 +57,38 @@ export const PROPERTY_KIND_LABEL: Record<string, string> = {
   motel: 'Habitación de motel',
   garage: 'Garaje',
 }
+
+export const INVOICE_STATUS_LABEL: Record<string, string> = {
+  pending: 'Pendiente',
+  partially_paid: 'Parcialmente pagada',
+  paid: 'Pagada',
+  cancelled: 'Cancelada',
+  void: 'Anulada',
+}
+
+export const BUSINESS_KIND_LABEL: Record<string, string> = {
+  shop: 'Tienda',
+  restaurant: 'Restaurante',
+  mechanic: 'Taller',
+  motel: 'Motel',
+  agency: 'Inmobiliaria',
+}
+
+export const JOB_STAT_LABEL: Record<string, string> = {
+  fisher: 'Pesca',
+  miner: 'Minería',
+  lumberjack: 'Leñador',
+  hunter: 'Caza',
+  busdriver: 'Conductor de bus',
+  taxi: 'Taxi',
+  truckdriver: 'Camionero',
+}
+
+/** Segundos → "8 h 12 min". */
+export function formatDuration(seconds: number): string {
+  if (seconds <= 0) return '0 min'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (h === 0) return `${m} min`
+  return m === 0 ? `${h} h` : `${h} h ${m} min`
+}
