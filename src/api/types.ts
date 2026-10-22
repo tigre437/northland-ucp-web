@@ -224,6 +224,7 @@ export interface PrisonStatus {
 
 export interface CharacterRecord {
   citizenid: string
+  name?: string | null
   profilePic: string | null
   dangerous: boolean
   wanted: boolean
@@ -291,6 +292,7 @@ export type JobStatKind =
 export interface JobStat {
   kind: JobStatKind
   citizenid: string
+  name?: string | null
   level: number
   experience: number
   totalExperience: number
@@ -301,6 +303,7 @@ export interface JobStat {
 
 export interface GymStat {
   citizenid: string
+  name?: string | null
   strength: number
   stamina: number
   membershipActive: boolean
@@ -315,6 +318,7 @@ export interface RacingStat {
 
 export interface WorkHours {
   citizenid: string
+  name?: string | null
   job: string
   sessions: number
   totalSeconds: number

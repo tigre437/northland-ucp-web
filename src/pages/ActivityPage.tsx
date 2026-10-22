@@ -47,7 +47,7 @@ export function ActivityPage() {
                       </p>
                       <Badge tone="accent">Nivel {j.level}</Badge>
                     </div>
-                    <p className="mt-1 text-xs text-ink-faint">{j.citizenid}</p>
+                    <p className="mt-1 text-xs text-ink-faint">{j.name ?? j.citizenid}</p>
                     <dl className="mt-3 space-y-1 text-xs">
                       <div className="flex justify-between">
                         <dt className="text-ink-faint">XP total</dt>
@@ -83,7 +83,7 @@ export function ActivityPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-ink">{w.job}</p>
                       <p className="text-xs text-ink-faint">
-                        {w.citizenid} · {w.sessions} sesiones
+                        {w.name ?? w.citizenid} · {w.sessions} sesiones
                       </p>
                     </div>
                     <span className="font-display font-semibold text-ink">

@@ -230,6 +230,7 @@ export const demoFinances: Finances = {
 export const demoRecords: CharacterRecord[] = [
   {
     citizenid: 'J6ZI2KS2',
+    name: 'Tigre Dev',
     profilePic: null,
     dangerous: false,
     wanted: false,
@@ -325,18 +326,18 @@ export const demoAgencies: Agency[] = [
 
 export const demoStats: ActivityStats = {
   jobs: [
-    { kind: 'fisher', citizenid: 'J6ZI2KS2', level: 20, experience: 6156, totalExperience: 6156, totalEarnings: 1200, dailyExperience: 0, dailyEarnings: 0 },
-    { kind: 'truckdriver', citizenid: 'J6ZI2KS2', level: 3, experience: 107, totalExperience: 2207, totalEarnings: 2510, dailyExperience: 276, dailyEarnings: 281 },
-    { kind: 'miner', citizenid: 'J6ZI2KS2', level: 1, experience: 525, totalExperience: 525, totalEarnings: 400, dailyExperience: 0, dailyEarnings: 0 },
-    { kind: 'hunter', citizenid: 'J6ZI2KS2', level: 1, experience: 295, totalExperience: 295, totalEarnings: 840, dailyExperience: 0, dailyEarnings: 0 },
-    { kind: 'taxi', citizenid: 'J6ZI2KS2', level: 1, experience: 810, totalExperience: 810, totalEarnings: 466, dailyExperience: 0, dailyEarnings: 0 },
+    { kind: 'fisher', citizenid: 'J6ZI2KS2', name: 'Tigre Dev', level: 20, experience: 6156, totalExperience: 6156, totalEarnings: 1200, dailyExperience: 0, dailyEarnings: 0 },
+    { kind: 'truckdriver', citizenid: 'J6ZI2KS2', name: 'Tigre Dev', level: 3, experience: 107, totalExperience: 2207, totalEarnings: 2510, dailyExperience: 276, dailyEarnings: 281 },
+    { kind: 'miner', citizenid: 'J6ZI2KS2', name: 'Tigre Dev', level: 1, experience: 525, totalExperience: 525, totalEarnings: 400, dailyExperience: 0, dailyEarnings: 0 },
+    { kind: 'hunter', citizenid: 'J6ZI2KS2', name: 'Tigre Dev', level: 1, experience: 295, totalExperience: 295, totalEarnings: 840, dailyExperience: 0, dailyEarnings: 0 },
+    { kind: 'taxi', citizenid: 'J6ZI2KS2', name: 'Tigre Dev', level: 1, experience: 810, totalExperience: 810, totalEarnings: 466, dailyExperience: 0, dailyEarnings: 0 },
   ],
-  gym: { citizenid: 'J6ZI2KS2', strength: 35, stamina: 60, membershipActive: false },
+  gym: { citizenid: 'J6ZI2KS2', name: 'Tigre Dev', strength: 35, stamina: 60, membershipActive: false },
   racing: { name: 'Tigre', tag: 'TGR', elo: 1250, races: 34 },
   workHours: [
-    { citizenid: 'J6ZI2KS2', job: 'sheriff', sessions: 6, totalSeconds: 8 * 3600 + 12 * 60 },
-    { citizenid: 'J6ZI2KS2', job: 'miner', sessions: 2, totalSeconds: 2 * 3600 + 30 * 60 },
-    { citizenid: 'J6ZI2KS2', job: 'hunter', sessions: 1, totalSeconds: 47 * 60 },
+    { citizenid: 'J6ZI2KS2', name: 'Tigre Dev', job: 'sheriff', sessions: 6, totalSeconds: 8 * 3600 + 12 * 60 },
+    { citizenid: 'J6ZI2KS2', name: 'Tigre Dev', job: 'miner', sessions: 2, totalSeconds: 2 * 3600 + 30 * 60 },
+    { citizenid: 'J6ZI2KS2', name: 'Tigre Dev', job: 'hunter', sessions: 1, totalSeconds: 47 * 60 },
   ],
 }
 

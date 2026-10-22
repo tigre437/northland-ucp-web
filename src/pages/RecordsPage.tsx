@@ -137,9 +137,10 @@ function RecordCard({ record: rec }: { record: CharacterRecord }) {
   return (
     <Card className="p-5">
       <div className="flex items-center gap-3">
-        <Avatar url={rec.profilePic} name={rec.citizenid} />
+        <Avatar url={rec.profilePic} name={rec.name ?? rec.citizenid} />
         <div className="min-w-0 flex-1">
-          <p className="font-display font-semibold text-ink">{rec.citizenid}</p>
+          <p className="font-display font-semibold text-ink">{rec.name ?? rec.citizenid}</p>
+          {rec.name && <p className="font-mono text-xs text-ink-faint">{rec.citizenid}</p>}
           <div className="mt-1 flex flex-wrap gap-1.5">
             {rec.badges.map((b) => (
               <Badge key={`${b.job}:${b.badge}`} tone="accent">

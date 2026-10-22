@@ -1,8 +1,10 @@
 import {
+  AlertTriangle,
   Ban,
   Car,
   Gavel,
   KeyRound,
+  LogOut,
   Package,
   Plus,
   ScrollText,
@@ -15,7 +17,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api, STAFF_PERMS } from '@/api'
-import type { NewSanction, StaffPlayerDetail } from '@/api'
+import type { NewSanction, SanctionType, StaffPlayerDetail } from '@/api'
 import {
   useMe,
   useStaffAudit,
@@ -131,6 +133,12 @@ export function StaffPage() {
   )
 }
 
+const SANCTION_PERM: Record<SanctionType, string> = {
+  warn: 'admin.warn',
+  kick: 'admin.kick',
+  ban: 'bans.create',
+}
+
 function PlayerPanel({
   citizenid,
   tab,
@@ -143,6 +151,12 @@ function PlayerPanel({
   perms: Set<string>
 }) {
   const detail = useStaffPlayer(citizenid)
+  const [sanctionPreset, setSanctionPreset] = useState<SanctionType | null>(null)
+
+  const quickSanction = (type: SanctionType) => {
+    setSanctionPreset(type)
+    onTab('sanciones')
+  }
 
   const allTabs: { id: Tab; label: string; icon: typeof Gavel; perm: string }[] = [
     { id: 'resumen', label: 'Resumen', icon: ShieldCheck, perm: 'players.view' },
@@ -160,7 +174,7 @@ function PlayerPanel({
       ) : detail.isError ? (
         <ErrorState description="No se pudo cargar el jugador." onRetry={() => void detail.refetch()} />
       ) : detail.data ? (
-        <PlayerHeader player={detail.data} />
+        <PlayerHeader player={detail.data} perms={perms} onQuickSanction={quickSanction} />
       ) : null}
 
       {tabs.length > 1 && (
@@ -187,7 +201,12 @@ function PlayerPanel({
 
       {tab === 'resumen' && detail.data && <SummaryTab player={detail.data} perms={perms} />}
       {tab === 'sanciones' && perms.has('players.view') && (
-        <SanctionsTab citizenid={citizenid} perms={perms} />
+        <SanctionsTab
+          key={sanctionPreset ?? 'default'}
+          citizenid={citizenid}
+          perms={perms}
+          initialType={sanctionPreset}
+        />
       )}
       {tab === 'multas' && perms.has('penalties.view') && (
         <PenaltiesTab citizenid={citizenid} perms={perms} />
@@ -200,7 +219,31 @@ function PlayerPanel({
   )
 }
 
-function PlayerHeader({ player: p }: { player: StaffPlayerDetail }) {
+function PlayerHeader({
+  player: p,
+  perms,
+  onQuickSanction,
+}: {
+  player: StaffPlayerDetail
+  perms: Set<string>
+  onQuickSanction: (type: SanctionType) => void
+}) {
+  const quickBtns: { type: SanctionType; label: string; icon: typeof Ban; cls: string }[] = [
+    {
+      type: 'warn', label: 'Avisar', icon: AlertTriangle,
+      cls: 'border-amber-500/40 text-amber-600 hover:bg-amber-500/10 dark:text-amber-400',
+    },
+    {
+      type: 'kick', label: 'Kick', icon: LogOut,
+      cls: 'border-orange-500/40 text-orange-600 hover:bg-orange-500/10 dark:text-orange-400',
+    },
+    {
+      type: 'ban', label: 'Ban', icon: Ban,
+      cls: 'border-danger/40 text-danger-strong hover:bg-danger/10',
+    },
+  ]
+  const allowed = quickBtns.filter((b) => perms.has(SANCTION_PERM[b.type]))
+
   return (
     <Card className="flex flex-wrap items-center gap-4 p-4">
       <div className="min-w-0 flex-1">
@@ -218,10 +261,26 @@ function PlayerHeader({ player: p }: { player: StaffPlayerDetail }) {
           )}
         </div>
       </div>
-      <div className="text-right text-sm">
-        <p className="text-ink-faint">Efectivo <span className="text-ink">{formatMoney(p.cash)}</span></p>
-        <p className="text-ink-faint">Banco <span className="text-ink">{formatMoney(p.bank)}</span></p>
-        <p className="text-xs text-ink-faint">Últ. conexión {relativeTime(p.lastLoggedOut)}</p>
+      <div className="flex flex-col items-end gap-2">
+        <div className="text-right text-sm">
+          <p className="text-ink-faint">Efectivo <span className="text-ink">{formatMoney(p.cash)}</span></p>
+          <p className="text-ink-faint">Banco <span className="text-ink">{formatMoney(p.bank)}</span></p>
+          <p className="text-xs text-ink-faint">Últ. conexión {relativeTime(p.lastLoggedOut)}</p>
+        </div>
+        {allowed.length > 0 && (
+          <div className="flex gap-1.5">
+            {allowed.map(({ type, label, icon: Icon, cls }) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => onQuickSanction(type)}
+                className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${cls}`}
+              >
+                <Icon size={12} /> {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </Card>
   )
@@ -281,10 +340,24 @@ function SummaryTab({ player: p, perms }: { player: StaffPlayerDetail; perms: Se
 }
 
 /** Sanciones de administración: avisos, kicks y bans con duración. */
-function SanctionsTab({ citizenid, perms }: { citizenid: string; perms: Set<string> }) {
+function SanctionsTab({
+  citizenid,
+  perms,
+  initialType,
+}: {
+  citizenid: string
+  perms: Set<string>
+  /** Tipo preseleccionado por el botón rápido del header. */
+  initialType?: SanctionType | null
+}) {
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useStaffSanctions(citizenid)
-  const [form, setForm] = useState({ type: 'warn' as 'warn' | 'kick' | 'ban', reason: '', value: '', unit: 'days' })
+  const [form, setForm] = useState({
+    type: (initialType ?? 'warn') as SanctionType,
+    reason: '',
+    value: '',
+    unit: 'days',
+  })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
