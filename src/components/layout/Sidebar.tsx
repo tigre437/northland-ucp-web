@@ -1,18 +1,10 @@
-import { Car, Home, LayoutDashboard, UserRound, Users } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 import { isDemo } from '@/config/env'
 import { useServerInfo } from '@/hooks/api'
 
 import { BrandMark } from './BrandMark'
-
-export const NAV_ITEMS = [
-  { to: '/', label: 'Panel', icon: LayoutDashboard, end: true },
-  { to: '/personajes', label: 'Personajes', icon: Users },
-  { to: '/propiedades', label: 'Propiedades', icon: Home },
-  { to: '/vehiculos', label: 'Vehículos', icon: Car },
-  { to: '/cuenta', label: 'Cuenta', icon: UserRound },
-] as const
+import { NAV_ITEMS } from './nav'
 
 export function Sidebar() {
   const { data: server } = useServerInfo()

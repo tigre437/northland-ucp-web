@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 
-import { NAV_ITEMS } from './Sidebar'
+import { NAV_ITEMS } from './nav'
 
 /** Navegación inferior fija para móvil (< md). */
 export function MobileNav() {
