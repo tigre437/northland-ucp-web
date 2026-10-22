@@ -13,7 +13,7 @@ import {
   Trash2,
   UserPlus,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api, STAFF_PERMS } from '@/api'
@@ -879,7 +879,9 @@ function PermsSection({ perms }: { perms: Set<string> }) {
   const [dirty, setDirty] = useState<Record<string, Set<string>>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
+  const [newRole, setNewRole] = useState({ id: '', name: '' })
 
+  // solo para el datalist de sugerencias al añadir — NO se muestran todos
   const guildRoles = useQuery({
     queryKey: ['staff-guild-roles'] as const,
     queryFn: () => api.staffGuildRoles(),
@@ -926,14 +928,44 @@ function PermsSection({ perms }: { perms: Set<string> }) {
     }
   }
 
+  async function addRole(e: FormEvent) {
+    e.preventDefault()
+    const id = newRole.id.trim()
+    if (!id) return
+    setSaving(id)
+    setMsg(null)
+    try {
+      await api.staffSetRoleGrant(id, { perms: [], roleName: newRole.name.trim() || undefined })
+      setNewRole({ id: '', name: '' })
+      await queryClient.invalidateQueries({ queryKey: ['staff-role-grants'] })
+      setMsg('Rol añadido — marca sus permisos y pulsa Guardar.')
+    } catch {
+      setMsg('No se pudo añadir el rol.')
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  async function removeRole(roleId: string, roleName: string) {
+    setSaving(roleId)
+    try {
+      await api.staffDeleteRoleGrant(roleId)
+      await queryClient.invalidateQueries({ queryKey: ['staff-role-grants'] })
+      setMsg(`Rol «${roleName}» eliminado del staff.`)
+    } catch {
+      setMsg('No se pudo eliminar el rol.')
+    } finally {
+      setSaving(null)
+    }
+  }
+
   const alwaysAll = new Set((grants.data ?? []).filter((g) => g.alwaysAll).map((g) => g.roleId))
 
-  const allRoles = [
-    ...(guildRoles.data ?? []).map((r) => ({ roleId: r.id, roleName: r.name })),
-    ...(grants.data ?? [])
-      .filter((g) => !(guildRoles.data ?? []).some((r) => r.id === g.roleId))
-      .map((g) => ({ roleId: g.roleId, roleName: g.roleName ?? g.roleId })),
-  ]
+  // solo roles añadidos a la matriz (grants + admins de env)
+  const allRoles = (grants.data ?? []).map((g) => ({
+    roleId: g.roleId,
+    roleName: g.roleName ?? g.roleId,
+  }))
 
   return (
     <section aria-label="Permisos de roles" className="space-y-3">
@@ -943,15 +975,41 @@ function PermsSection({ perms }: { perms: Set<string> }) {
         </span>
       </SectionTitle>
       <Card className="p-4">
-        {guildRoles.isError && (
-          <p className="mb-3 text-xs text-warm-strong">
-            No se pudo leer la lista de roles del Discord (¿bot sin configurar?) — se muestran solo
-            los roles ya asignados.
-          </p>
-        )}
-        {allRoles.length === 0 && !guildRoles.isLoading ? (
+        <form onSubmit={addRole} className="mb-4 flex flex-wrap items-end gap-3 border-b border-line-soft pb-4">
+          <label className="text-xs text-ink-faint">
+            ID del rol de Discord
+            <input
+              type="text" required value={newRole.id} list="guild-role-ids"
+              onChange={(e) => setNewRole({ ...newRole, id: e.target.value })}
+              placeholder="123456789012345678"
+              className={`mt-1 block w-52 font-mono ${inputCls}`}
+            />
+            <datalist id="guild-role-ids">
+              {(guildRoles.data ?? []).map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </datalist>
+          </label>
+          <label className="text-xs text-ink-faint">
+            Nombre (opcional)
+            <input
+              type="text" value={newRole.name}
+              onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
+              placeholder="Moderador"
+              className={`mt-1 block w-40 ${inputCls}`}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={saving !== null}
+            className="rounded-md border border-accent-deep/60 bg-accent-deep/25 px-3 py-1.5 text-sm font-medium text-accent-strong transition-colors hover:bg-accent-deep/40 disabled:opacity-50"
+          >
+            <Plus size={14} className="mr-1 inline" /> Añadir rol de staff
+          </button>
+        </form>
+        {allRoles.length === 0 && !grants.isLoading ? (
           <p className="text-sm text-ink-faint">
-            Sin roles disponibles. Configura el bot de Discord o asigna roles manualmente.
+            Ningún rol añadido todavía — pega el ID de un rol de Discord arriba.
           </p>
         ) : (
           <div className="space-y-4">
@@ -968,6 +1026,17 @@ function PermsSection({ perms }: { perms: Set<string> }) {
                     <span className="font-mono text-xs text-ink-faint">{roleId}</span>
                     {isAdmin && (
                       <Badge tone="accent">Admin · siempre todos los permisos</Badge>
+                    )}
+                    {!isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => void removeRole(roleId, roleName)}
+                        disabled={saving === roleId}
+                        aria-label={`Quitar rol ${roleName}`}
+                        className="ml-auto inline-flex items-center gap-1 rounded-md border border-line px-2 py-0.5 text-xs text-danger-strong transition-colors hover:bg-danger/10 disabled:opacity-50"
+                      >
+                        <Trash2 size={11} /> Quitar
+                      </button>
                     )}
                     {isDirty && (
                       <button
