@@ -176,7 +176,9 @@ export function CharacterDetailPage() {
             {ownedVehicles.map((v) => (
               <li key={v.id} className="flex flex-wrap justify-between gap-3">
                 <span className="font-mono text-ink">{v.plate}</span>
-                <span className="text-ink">{v.model}</span>
+                <span className="text-ink">
+                  {v.tag ? `${v.tag} (${v.model})` : v.model}
+                </span>
                 <span className="text-ink-faint">
                   {VEHICLE_STATE_LABEL[v.state]}
                   {v.garage ? ` · ${v.garage}` : ''}

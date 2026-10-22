@@ -95,6 +95,8 @@ export interface Vehicle {
   ownerName: string | null
   plate: string
   model: string
+  /** Mote/renombre del vehículo (qs-advancedgarages). */
+  tag: string | null
   garage: string | null
   state: VehicleState
   fuel: number | null

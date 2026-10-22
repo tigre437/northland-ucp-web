@@ -41,7 +41,7 @@ export function VehiclesPage() {
               <thead>
                 <tr className="border-b border-line text-left">
                   <th className="kicker px-4 py-3 font-semibold">Matrícula</th>
-                  <th className="kicker px-4 py-3 font-semibold">Modelo</th>
+                  <th className="kicker px-4 py-3 font-semibold">Vehículo</th>
                   <th className="kicker px-4 py-3 font-semibold">Propietario</th>
                   <th className="kicker px-4 py-3 font-semibold">Garaje</th>
                   <th className="kicker px-4 py-3 font-semibold">Estado</th>
@@ -57,7 +57,16 @@ export function VehiclesPage() {
                         <Star size={12} className="ml-1.5 inline fill-warm text-warm" aria-label="Favorito" />
                       )}
                     </td>
-                    <td className="px-4 py-3 text-ink">{v.model}</td>
+                    <td className="px-4 py-3 text-ink">
+                      {v.tag ? (
+                        <>
+                          <span className="font-medium">{v.tag}</span>
+                          <span className="ml-1.5 text-xs text-ink-faint">({v.model})</span>
+                        </>
+                      ) : (
+                        v.model
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-ink-dim">{v.ownerName ?? '—'}</td>
                     <td className="px-4 py-3 text-ink-dim">{v.garage ?? '—'}</td>
                     <td className="px-4 py-3">
@@ -96,7 +105,11 @@ function VehicleCard({ v }: { v: Vehicle }) {
         <p className="font-mono font-semibold text-ink">{v.plate}</p>
         <Badge tone={STATE_TONE[v.state]}>{VEHICLE_STATE_LABEL[v.state]}</Badge>
       </div>
-      <p className="mt-1 text-sm text-ink">{v.model}</p>
+      <p className="mt-1 text-sm text-ink">
+        {v.tag ? `${v.tag} ` : ''}
+        {v.tag && <span className="text-ink-faint">({v.model})</span>}
+        {!v.tag && v.model}
+      </p>
       <dl className="mt-2 space-y-1 text-xs text-ink-faint">
         <div className="flex justify-between">
           <dt>Propietario</dt>

@@ -99,6 +99,7 @@ export const demoVehicles: Vehicle[] = [
     ownerName: 'Tigre Dev',
     plate: '00GLY025',
     model: 'sheriff2',
+    tag: 'La Bestia',
     garage: 'Hayes Autos',
     state: 'impound',
     fuel: 56,
