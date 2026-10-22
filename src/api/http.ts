@@ -45,6 +45,9 @@ export class HttpApi implements UcpApi {
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
     const headers = new Headers(init?.headers)
+    // ngrok free muestra una página de aviso que intercepta la primera
+    // petición del navegador; esta cabecera oficial la omite.
+    headers.set('ngrok-skip-browser-warning', '1')
     if (init?.method && init.method !== 'GET' && this.csrfToken) {
       headers.set('X-CSRF-Token', this.csrfToken)
     }
