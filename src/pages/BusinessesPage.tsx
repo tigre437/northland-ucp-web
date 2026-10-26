@@ -1,7 +1,10 @@
-import { BedDouble, Building, ClipboardList, Store, UtensilsCrossed, Users, Wallet, Wrench } from 'lucide-react'
+import { BedDouble, Building, ChevronRight, ClipboardList, Store, UtensilsCrossed, Users, Wallet, Wrench, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import type { Business, BusinessKind, Workshop, WorkshopOrder } from '@/api'
 import { useAgencies, useBusinesses, useWorkshops } from '@/hooks/api'
+import { modLabel } from '@/lib/mods'
 import { BUSINESS_KIND_LABEL, formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/feedback'
 import { Badge, Card, KeyVal, PageHeader, SectionTitle } from '@/components/ui/surfaces'
@@ -108,24 +111,143 @@ const TX_TYPE: Record<string, { label: string; tone: 'accent' | 'warm' | 'neutra
   payroll: { label: 'Nómina', tone: 'neutral' },
 }
 
+/** Resumen de la orden — clic abre la «factura» en modal. */
 function OrderRow({ order: o, showCustomer }: { order: WorkshopOrder; showCustomer?: boolean }) {
+  const [open, setOpen] = useState(false)
   const st = ORDER_STATUS[o.status] ?? { label: o.status, tone: 'neutral' as const }
   return (
-    <li className="rounded-md border border-line-soft px-3 py-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-xs text-ink">{o.vehiclePlate ?? '—'}</span>
-        <span className="text-xs text-ink-faint">{o.vehicleModel ?? ''}</span>
-        <Badge tone={st.tone}>{st.label}</Badge>
-        <span className="ml-auto text-xs font-medium text-ink">{formatMoney(o.totalCost)}</span>
-      </div>
-      <p className="mt-1 text-xs text-ink-faint">
-        {showCustomer && o.customerName ? `${o.customerName} · ` : ''}
-        {o.mods.length > 0
-          ? o.mods.map((m) => `${m.name} (${formatMoney(m.price)})`).join(', ')
-          : 'Sin mods detalladas'}
-        {o.createdAt && ` · ${formatDateTime(o.createdAt)}`}
-      </p>
+    <li>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center gap-2 rounded-md border border-line-soft px-3 py-2 text-left transition-colors hover:border-line hover:bg-card-hover"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-xs text-ink">{o.vehiclePlate ?? '—'}</span>
+            <span className="text-xs text-ink-faint">{o.vehicleModel ?? ''}</span>
+            <Badge tone={st.tone}>{st.label}</Badge>
+          </div>
+          <p className="mt-0.5 truncate text-xs text-ink-faint">
+            {showCustomer && o.customerName ? `${o.customerName} · ` : ''}
+            {o.workshopName ? `${o.workshopName} · ` : ''}
+            {o.mods.length} modificaci{o.mods.length === 1 ? 'ón' : 'ones'}
+            {o.createdAt && ` · ${formatDateTime(o.createdAt)}`}
+          </p>
+        </div>
+        <span className="text-xs font-medium text-ink">{formatMoney(o.totalCost)}</span>
+        <ChevronRight size={14} className="shrink-0 text-ink-faint" />
+      </button>
+      {open && <OrderModal order={o} onClose={() => setOpen(false)} />}
     </li>
+  )
+}
+
+/** Detalle de la orden con formato factura — mods traducidos al
+ * español, línea por línea con su precio y el total. */
+function OrderModal({ order: o, onClose }: { order: WorkshopOrder; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const st = ORDER_STATUS[o.status] ?? { label: o.status, tone: 'neutral' as const }
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Orden ${o.id}`}
+      onClick={onClose}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-lg border border-line bg-card shadow-2xl"
+      >
+        {/* cabecera de factura */}
+        <div className="flex items-start justify-between border-b border-line-soft px-5 py-4">
+          <div>
+            <p className="kicker">Orden de taller #{o.id}</p>
+            <p className="mt-1 font-display font-semibold text-ink">
+              {o.workshopName ?? 'Taller'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="rounded-full border border-line p-1.5 text-ink-faint transition-colors hover:bg-card-hover hover:text-ink"
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* datos del trabajo */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-b border-dashed border-line-soft px-5 py-4 text-sm">
+          <div>
+            <p className="text-xs text-ink-faint">Cliente</p>
+            <p className="truncate text-ink">{o.customerName ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-ink-faint">Estado</p>
+            <Badge tone={st.tone}>{st.label}</Badge>
+          </div>
+          <div>
+            <p className="text-xs text-ink-faint">Vehículo</p>
+            <p className="truncate text-ink">
+              {o.vehicleModel ?? '—'}{' '}
+              <span className="font-mono text-xs text-ink-faint">{o.vehiclePlate ?? ''}</span>
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-ink-faint">Fecha</p>
+            <p className="text-ink">{o.createdAt ? formatDateTime(o.createdAt) : '—'}</p>
+          </div>
+          {o.completedAt && (
+            <div className="col-span-2">
+              <p className="text-xs text-ink-faint">Completada</p>
+              <p className="text-ink">{formatDateTime(o.completedAt)}</p>
+            </div>
+          )}
+        </div>
+
+        {/* líneas de factura */}
+        <div className="max-h-72 overflow-y-auto px-5 py-4">
+          <p className="kicker mb-2">Trabajos</p>
+          {o.mods.length === 0 ? (
+            <p className="text-sm text-ink-faint">Sin modificaciones detalladas.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {o.mods.map((m, i) => (
+                <li
+                  key={i}
+                  className="flex items-baseline gap-2 text-sm"
+                >
+                  <span className="text-ink-dim">{modLabel(m.name)}</span>
+                  <span className="flex-1 border-b border-dotted border-line-soft" />
+                  <span className="font-medium tabular-nums text-ink">{formatMoney(m.price)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* total */}
+        <div className="flex items-center justify-between border-t border-line-soft px-5 py-3.5">
+          <span className="font-display text-sm font-semibold uppercase tracking-wide text-ink">
+            Total
+          </span>
+          <span className="font-display text-lg font-bold tabular-nums text-accent-strong">
+            {formatMoney(o.totalCost)}
+          </span>
+        </div>
+      </div>
+    </div>,
+    document.body,
   )
 }
 
