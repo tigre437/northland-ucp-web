@@ -4,6 +4,7 @@ import { ApiError } from './types'
 import type {
   ActivityStats,
   Agency,
+  WorkshopBoard,
   AuditEntry,
   Business,
   Character,
@@ -130,6 +131,10 @@ export class HttpApi implements UcpApi {
 
   getAgencies(): Promise<Agency[]> {
     return this.request<Agency[]>('/agencies')
+  }
+
+  getWorkshops(): Promise<WorkshopBoard> {
+    return this.request<WorkshopBoard>('/workshops')
   }
 
   getStats(): Promise<ActivityStats> {

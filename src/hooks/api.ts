@@ -58,6 +58,10 @@ export function useAgencies() {
   return useQuery({ queryKey: queryKeys.agencies, queryFn: () => api.getAgencies(), retry: sessionRetry })
 }
 
+export function useWorkshops() {
+  return useQuery({ queryKey: queryKeys.workshops, queryFn: () => api.getWorkshops(), retry: sessionRetry })
+}
+
 export function useStats() {
   return useQuery({ queryKey: queryKeys.stats, queryFn: () => api.getStats(), retry: sessionRetry })
 }

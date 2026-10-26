@@ -1,8 +1,8 @@
-import { BedDouble, Building, Store, UtensilsCrossed, Wrench } from 'lucide-react'
+import { BedDouble, Building, ClipboardList, Store, UtensilsCrossed, Users, Wallet, Wrench } from 'lucide-react'
 
-import type { Business, BusinessKind } from '@/api'
-import { useAgencies, useBusinesses } from '@/hooks/api'
-import { BUSINESS_KIND_LABEL, formatDate, formatMoney } from '@/lib/format'
+import type { Business, BusinessKind, Workshop, WorkshopOrder } from '@/api'
+import { useAgencies, useBusinesses, useWorkshops } from '@/hooks/api'
+import { BUSINESS_KIND_LABEL, formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/feedback'
 import { Badge, Card, KeyVal, PageHeader, SectionTitle } from '@/components/ui/surfaces'
 
@@ -22,6 +22,7 @@ export function BusinessesPage() {
         subtitle="Comercios, restaurantes, talleres y moteles donde eres dueño o empleado."
       />
       <BusinessesSection />
+      <WorkshopsSection />
       <AgenciesSection />
     </div>
   )
@@ -87,6 +88,191 @@ function BusinessCard({ business: b }: { business: Business }) {
         </div>
       </div>
     </Card>
+  )
+}
+
+// ── Talleres mecánicos ──────────────────────────────────────────
+
+const ORDER_STATUS: Record<string, { label: string; tone: 'accent' | 'warm' | 'neutral' | 'danger' }> = {
+  pending: { label: 'Pendiente', tone: 'warm' },
+  in_progress: { label: 'En curso', tone: 'accent' },
+  completed: { label: 'Completada', tone: 'neutral' },
+  cancelled: { label: 'Cancelada', tone: 'danger' },
+}
+
+const TX_TYPE: Record<string, { label: string; tone: 'accent' | 'warm' | 'neutral' | 'danger' }> = {
+  sale: { label: 'Venta', tone: 'accent' },
+  expense: { label: 'Gasto', tone: 'danger' },
+  deposit: { label: 'Ingreso', tone: 'accent' },
+  withdraw: { label: 'Retirada', tone: 'warm' },
+  payroll: { label: 'Nómina', tone: 'neutral' },
+}
+
+function OrderRow({ order: o, showCustomer }: { order: WorkshopOrder; showCustomer?: boolean }) {
+  const st = ORDER_STATUS[o.status] ?? { label: o.status, tone: 'neutral' as const }
+  return (
+    <li className="rounded-md border border-line-soft px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-mono text-xs text-ink">{o.vehiclePlate ?? '—'}</span>
+        <span className="text-xs text-ink-faint">{o.vehicleModel ?? ''}</span>
+        <Badge tone={st.tone}>{st.label}</Badge>
+        <span className="ml-auto text-xs font-medium text-ink">{formatMoney(o.totalCost)}</span>
+      </div>
+      <p className="mt-1 text-xs text-ink-faint">
+        {showCustomer && o.customerName ? `${o.customerName} · ` : ''}
+        {o.mods.length > 0
+          ? o.mods.map((m) => `${m.name} (${formatMoney(m.price)})`).join(', ')
+          : 'Sin mods detalladas'}
+        {o.createdAt && ` · ${formatDateTime(o.createdAt)}`}
+      </p>
+    </li>
+  )
+}
+
+function WorkshopCard({ ws }: { ws: Workshop }) {
+  return (
+    <Card className="p-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="flex size-9 items-center justify-center rounded-md border border-line bg-card-hover text-accent-strong">
+          <Wrench size={17} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display font-semibold text-ink">{ws.name}</p>
+          <p className="text-xs text-ink-faint">
+            {ws.boughtAt ? `Desde ${formatDate(ws.boughtAt)}` : `ID ${ws.id}`}
+          </p>
+        </div>
+        <Badge tone={ws.role === 'owner' ? 'accent' : 'neutral'}>
+          {ws.role === 'owner' ? 'Dueño' : 'Empleado'}
+        </Badge>
+        {ws.forSale && <Badge tone="warm">En venta</Badge>}
+        {ws.balance != null && (
+          <span className="text-sm font-medium text-ink">{formatMoney(ws.balance)}</span>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-5 lg:grid-cols-3">
+        <div>
+          <p className="kicker mb-2 inline-flex items-center gap-1.5">
+            <Users size={11} /> Empleados ({ws.employees.length})
+          </p>
+          {ws.employees.length === 0 ? (
+            <p className="text-xs text-ink-faint">Sin empleados.</p>
+          ) : (
+            <ul className="space-y-1">
+              {ws.employees.map((e) => (
+                <li key={e.identifier} className="text-sm text-ink-dim">
+                  {e.name ?? e.identifier}
+                  {e.hiredAt && (
+                    <span className="text-xs text-ink-faint"> · {formatDate(e.hiredAt)}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <p className="kicker mb-2 inline-flex items-center gap-1.5">
+            <Wallet size={11} /> Caja
+          </p>
+          {ws.transactions.length === 0 ? (
+            <p className="text-xs text-ink-faint">Sin movimientos.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {ws.transactions.slice(0, 8).map((t) => {
+                const tt = TX_TYPE[t.type] ?? { label: t.type, tone: 'neutral' as const }
+                return (
+                  <li key={t.id} className="flex items-center gap-2 text-xs">
+                    <Badge tone={tt.tone}>{tt.label}</Badge>
+                    <span className="min-w-0 flex-1 truncate text-ink-dim">
+                      {t.description ?? '—'}
+                    </span>
+                    <span className="font-medium text-ink">{formatMoney(t.amount)}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <p className="kicker mb-2 inline-flex items-center gap-1.5">
+            <ClipboardList size={11} /> Órdenes ({ws.orders.length})
+          </p>
+          {ws.orders.length === 0 ? (
+            <p className="text-xs text-ink-faint">Sin órdenes.</p>
+          ) : (
+            <ul className="space-y-2">
+              {ws.orders.slice(0, 6).map((o) => (
+                <OrderRow key={o.id} order={o} showCustomer />
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function WorkshopsSection() {
+  const { data, isLoading, isError, refetch } = useWorkshops()
+
+  if (isLoading) {
+    return (
+      <section aria-label="Talleres">
+        <SectionTitle>
+          <span className="inline-flex items-center gap-2">
+            <Wrench size={14} /> Talleres mecánicos
+          </span>
+        </SectionTitle>
+        <Skeleton className="h-48" />
+      </section>
+    )
+  }
+  if (isError) {
+    return (
+      <section aria-label="Talleres">
+        <SectionTitle>
+          <span className="inline-flex items-center gap-2">
+            <Wrench size={14} /> Talleres mecánicos
+          </span>
+        </SectionTitle>
+        <ErrorState description="No se pudieron cargar los talleres." onRetry={() => void refetch()} />
+      </section>
+    )
+  }
+  // pedidos como cliente solo en talleres ajenos (los propios ya se
+  // ven en la ficha del taller → evita duplicados)
+  const ownIds = new Set((data?.workshops ?? []).map((w) => w.id))
+  const customerOrders = (data?.customerOrders ?? []).filter(
+    (o) => !ownIds.has(o.mechanicId ?? '')
+  )
+  if (!data || (!data.workshops.length && !customerOrders.length)) return null
+
+  return (
+    <section className="space-y-4" aria-label="Talleres">
+      <SectionTitle>
+        <span className="inline-flex items-center gap-2">
+          <Wrench size={14} /> Talleres mecánicos
+        </span>
+      </SectionTitle>
+
+      {data.workshops.map((ws) => (
+        <WorkshopCard key={ws.id} ws={ws} />
+      ))}
+
+      {customerOrders.length > 0 && (
+        <Card className="p-5">
+          <p className="kicker mb-2">Mis pedidos en talleres</p>
+          <ul className="space-y-2">
+            {customerOrders.map((o) => (
+              <OrderRow key={o.id} order={o} />
+            ))}
+          </ul>
+        </Card>
+      )}
+    </section>
   )
 }
 

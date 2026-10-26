@@ -2,6 +2,7 @@ import { ApiError } from './types'
 import type {
   ActivityStats,
   Agency,
+  WorkshopBoard,
   AuditEntry,
   Business,
   Character,
@@ -29,6 +30,7 @@ import type {
 } from './types'
 import {
   demoAgencies,
+  demoWorkshops,
   demoAudit,
   demoBusinesses,
   demoCharacters,
@@ -125,6 +127,11 @@ export class DemoApi implements UcpApi {
   async getAgencies(): Promise<Agency[]> {
     await latency()
     return demoAgencies
+  }
+
+  async getWorkshops(): Promise<WorkshopBoard> {
+    await latency()
+    return demoWorkshops
   }
 
   async getStats(): Promise<ActivityStats> {

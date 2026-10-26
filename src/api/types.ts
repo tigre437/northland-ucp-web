@@ -283,6 +283,60 @@ export interface Agency {
   listings: AgencyListing[]
 }
 
+// ── Talleres mecánicos (qs-mechaniccreator) ──────────────────────
+
+export interface WorkshopMod {
+  name: string
+  price: number
+}
+
+export interface WorkshopOrder {
+  id: number
+  mechanicId: string | null
+  workshopName: string | null
+  customerName: string | null
+  vehicleModel: string | null
+  vehiclePlate: string | null
+  mods: WorkshopMod[]
+  totalCost: number
+  status: string
+  createdAt: string | null
+  completedAt: string | null
+}
+
+export interface WorkshopTransaction {
+  id: number
+  /** sale | expense | deposit | withdraw | payroll */
+  type: string
+  amount: number
+  description: string | null
+  name: string | null
+  createdAt: string | null
+}
+
+export interface WorkshopEmployee {
+  identifier: string
+  name: string | null
+  hiredAt: string | null
+}
+
+export interface Workshop {
+  id: string
+  name: string
+  role: 'owner' | 'employee'
+  balance: number | null
+  forSale: boolean
+  boughtAt: string | null
+  employees: WorkshopEmployee[]
+  transactions: WorkshopTransaction[]
+  orders: WorkshopOrder[]
+}
+
+export interface WorkshopBoard {
+  workshops: Workshop[]
+  customerOrders: WorkshopOrder[]
+}
+
 // ── Estadísticas de actividad ────────────────────────────────────
 
 export type JobStatKind =
@@ -515,6 +569,7 @@ export interface UcpApi {
   getLicenses(): Promise<LicenseDoc[]>
   getBusinesses(): Promise<Business[]>
   getAgencies(): Promise<Agency[]>
+  getWorkshops(): Promise<WorkshopBoard>
   getStats(): Promise<ActivityStats>
   getNotifications(): Promise<UcpNotification[]>
   getServerInfo(): Promise<ServerInfo>

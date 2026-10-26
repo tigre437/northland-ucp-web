@@ -23,6 +23,7 @@ export const queryKeys = {
   records: ['records'] as const,
   licenses: ['licenses'] as const,
   businesses: ['businesses'] as const,
+  workshops: ['workshops'] as const,
   agencies: ['agencies'] as const,
   stats: ['stats'] as const,
   notifications: ['notifications'] as const,

@@ -19,6 +19,7 @@ import type {
   StaffPlayerDetail,
   UcpNotification,
   Vehicle,
+  WorkshopBoard,
 } from './types'
 
 /**
@@ -509,3 +510,54 @@ export const demoAudit: AuditEntry[] = [
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
   },
 ]
+
+export const demoWorkshops: WorkshopBoard = {
+  workshops: [
+    {
+      id: '590589',
+      name: 'Speed Tune',
+      role: 'owner',
+      balance: 5125,
+      forSale: false,
+      boughtAt: '2026-10-18 01:35:33',
+      employees: [
+        { identifier: 'license2:35f1d1a0b72d611115c68a266cec9a8b7d6244ed', name: 'Tigre Dev', hiredAt: '2026-10-18 02:00:00' },
+      ],
+      transactions: [
+        { id: 3, type: 'sale', amount: 2300, description: 'Pedido de trabajo', name: null, createdAt: '2026-10-21 14:30:21' },
+        { id: 2, type: 'sale', amount: 2825, description: 'Pedido de trabajo', name: null, createdAt: '2026-10-21 14:28:43' },
+        { id: 1, type: 'expense', amount: 250000, description: 'Compra del taller', name: 'Tigre Dev', createdAt: '2026-10-18 01:23:18' },
+      ],
+      orders: [
+        {
+          id: 2, mechanicId: '590589', workshopName: 'Speed Tune', customerName: 'Tigre Dev',
+          vehicleModel: 's95dy', vehiclePlate: '00GLY025',
+          mods: [
+            { name: 'windowTint', price: 1000 },
+            { name: 'neonLights', price: 10000 },
+            { name: 'Suspensión deportiva', price: 12000 },
+          ],
+          totalCost: 23000, status: 'in_progress', createdAt: '2026-10-21 14:30:00', completedAt: null,
+        },
+        {
+          id: 1, mechanicId: '590589', workshopName: 'Speed Tune', customerName: 'Marta Ríos',
+          vehicleModel: 'T20', vehiclePlate: '29VEF248',
+          mods: [{ name: 'Rines', price: 1000 }],
+          totalCost: 1000, status: 'completed', createdAt: '2026-10-18 01:23:37', completedAt: '2026-10-18 12:00:00',
+        },
+      ],
+    },
+  ],
+  customerOrders: [
+    {
+      id: 2, mechanicId: '590589', workshopName: 'Speed Tune', customerName: 'Tigre Dev',
+      vehicleModel: 's95dy', vehiclePlate: '00GLY025',
+      mods: [
+        { name: 'windowTint', price: 1000 },
+        { name: 'neonLights', price: 10000 },
+        { name: 'Suspensión deportiva', price: 12000 },
+      ],
+      totalCost: 23000, status: 'in_progress', createdAt: '2026-10-21 14:30:00', completedAt: null,
+    },
+  ],
+}
