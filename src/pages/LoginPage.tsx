@@ -2,17 +2,22 @@ import { Shield, TreePine } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Navigate, useLocation } from 'react-router-dom'
 
-import { api } from '@/api'
+import { api, ApiError } from '@/api'
 import { isDemo } from '@/config/env'
 import { useMe } from '@/hooks/api'
-import { PageLoader } from '@/components/ui/feedback'
+import { PageLoader, ServiceUnavailable } from '@/components/ui/feedback'
 
 export function LoginPage() {
-  const { data: me, isLoading } = useMe()
+  const { data: me, isLoading, isError, error, refetch } = useMe()
   const location = useLocation()
   const queryClient = useQueryClient()
 
   if (isLoading) return <PageLoader />
+  // API caída → ni siquiera se puede iniciar el OAuth; el botón de
+  // Discord apuntaría a un servidor muerto.
+  if (isError && !(error instanceof ApiError && error.status === 401)) {
+    return <ServiceUnavailable onRetry={() => void refetch()} />
+  }
   if (me) {
     const from = (location.state as { from?: string } | null)?.from
     return <Navigate to={from ?? '/'} replace />

@@ -1,5 +1,5 @@
-import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { AlertTriangle, Loader2, RefreshCw, ServerOff, TreePine } from 'lucide-react'
+import { useEffect, type ReactNode } from 'react'
 
 export function Spinner({ className = '' }: { className?: string }) {
   return <Loader2 className={`animate-spin text-accent ${className}`} size={20} aria-label="Cargando" />
@@ -62,6 +62,56 @@ export function ErrorState({
           <RefreshCw size={14} /> Reintentar
         </button>
       )}
+    </div>
+  )
+}
+
+/**
+ * Página completa de «servicio caído»: la API no responde (túnel
+ * cerrado, backend apagado, despliegue en curso). Reintenta sola
+ * cada 20 s y ofrece reintento manual — el mensaje deja claro que
+ * el fallo es nuestro, no del usuario.
+ */
+export function ServiceUnavailable({ onRetry }: { onRetry?: () => void }) {
+  useEffect(() => {
+    const t = setInterval(() => onRetry?.(), 20_000)
+    return () => clearInterval(t)
+  }, [onRetry])
+
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-base px-4 py-10">
+      <div className="w-full max-w-md text-center">
+        <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-lg border border-line bg-accent-deep/25 text-accent-strong">
+          <TreePine size={30} strokeWidth={1.5} />
+        </span>
+        <h1 className="font-display text-xl font-bold uppercase tracking-[0.08em] text-ink">
+          Northland community
+        </h1>
+        <div className="mt-6 rounded-lg border border-line-soft bg-card p-8">
+          <ServerOff size={34} strokeWidth={1.5} className="mx-auto mb-4 text-warm-strong" />
+          <p className="font-display text-lg font-semibold text-ink">
+            El panel no está disponible ahora mismo
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-ink-dim">
+            Tranquilo: <strong className="text-ink">el fallo es nuestro, no tuyo</strong>. El
+            servidor está apagado o en mantenimiento. Nada de tu cuenta ni de tus personajes está
+            en riesgo — vuelve a intentarlo en unos minutos.
+          </p>
+          <p className="mt-3 text-xs text-ink-faint">
+            Reintentamos automáticamente cada 20 segundos.
+          </p>
+          <button
+            type="button"
+            onClick={() => onRetry?.()}
+            className="mt-5 inline-flex items-center gap-2 rounded-md bg-accent-deep px-4 py-2 text-sm font-semibold text-cream-50 transition-colors hover:bg-accent-deep/80"
+          >
+            <RefreshCw size={14} /> Reintentar ahora
+          </button>
+        </div>
+        <p className="mt-6 text-[0.68rem] uppercase tracking-[0.2em] text-ink-faint">
+          Condado de Northland · Roleplay
+        </p>
+      </div>
     </div>
   )
 }
