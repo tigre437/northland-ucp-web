@@ -116,27 +116,28 @@ function OrderRow({ order: o, showCustomer }: { order: WorkshopOrder; showCustom
   const [open, setOpen] = useState(false)
   const st = ORDER_STATUS[o.status] ?? { label: o.status, tone: 'neutral' as const }
   return (
-    <li>
+    <li className="flex items-center gap-2 rounded-md border border-line-soft px-3 py-2">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-xs text-ink">{o.vehiclePlate ?? '—'}</span>
+          <span className="text-xs text-ink-faint">{o.vehicleModel ?? ''}</span>
+          <Badge tone={st.tone}>{st.label}</Badge>
+          <span className="text-xs font-medium text-ink">{formatMoney(o.totalCost)}</span>
+        </div>
+        <p className="mt-0.5 text-xs leading-snug text-ink-faint">
+          {showCustomer && o.customerName ? `${o.customerName} · ` : ''}
+          {o.workshopName ? `${o.workshopName} · ` : ''}
+          {o.mods.length} modificaci{o.mods.length === 1 ? 'ón' : 'ones'}
+          {o.createdAt && ` · ${formatDateTime(o.createdAt)}`}
+        </p>
+      </div>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 rounded-md border border-line-soft px-3 py-2 text-left transition-colors hover:border-line hover:bg-card-hover"
+        aria-label={`Ver detalle de la orden ${o.id}`}
+        className="shrink-0 rounded-md border border-line p-1.5 text-ink-faint transition-colors hover:border-line hover:bg-card-hover hover:text-ink"
       >
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs text-ink">{o.vehiclePlate ?? '—'}</span>
-            <span className="text-xs text-ink-faint">{o.vehicleModel ?? ''}</span>
-            <Badge tone={st.tone}>{st.label}</Badge>
-          </div>
-          <p className="mt-0.5 truncate text-xs text-ink-faint">
-            {showCustomer && o.customerName ? `${o.customerName} · ` : ''}
-            {o.workshopName ? `${o.workshopName} · ` : ''}
-            {o.mods.length} modificaci{o.mods.length === 1 ? 'ón' : 'ones'}
-            {o.createdAt && ` · ${formatDateTime(o.createdAt)}`}
-          </p>
-        </div>
-        <span className="text-xs font-medium text-ink">{formatMoney(o.totalCost)}</span>
-        <ChevronRight size={14} className="shrink-0 text-ink-faint" />
+        <ChevronRight size={14} />
       </button>
       {open && <OrderModal order={o} onClose={() => setOpen(false)} />}
     </li>
@@ -273,7 +274,7 @@ function WorkshopCard({ ws }: { ws: Workshop }) {
         )}
       </div>
 
-      <div className="mt-4 grid gap-5 lg:grid-cols-3">
+      <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_1fr_1.5fr]">
         <div>
           <p className="kicker mb-2 inline-flex items-center gap-1.5">
             <Users size={11} /> Empleados ({ws.employees.length})
