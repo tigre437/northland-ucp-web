@@ -1,17 +1,22 @@
-import { TreePine } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-/**
- * Marca provisional de Northland community.
- * Sustituir el bloque del icono por el logo oficial cuando exista:
- * <img src="/logo.svg" alt="Northland community" className="size-9" />
- */
+import logo from '@/assets/logo.jpg'
+
+/** Logo circular de Northland community (Paleto Bay). */
+export function BrandLogo({ className = 'size-9' }: { className?: string }) {
+  return (
+    <img
+      src={logo}
+      alt="Northland community"
+      className={`${className} shrink-0 rounded-full border border-line object-cover`}
+    />
+  )
+}
+
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <Link to="/" className="flex items-center gap-2.5" aria-label="Northland community — inicio">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-accent-deep/25 text-accent-strong">
-        <TreePine size={20} strokeWidth={1.75} />
-      </span>
+      <BrandLogo />
       {!compact && (
         <span className="leading-tight">
           <span className="block font-display text-[0.95rem] font-bold uppercase tracking-[0.08em] text-ink">

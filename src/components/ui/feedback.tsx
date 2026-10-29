@@ -1,5 +1,7 @@
-import { AlertTriangle, Loader2, RefreshCw, ServerOff, TreePine } from 'lucide-react'
+import { AlertTriangle, Loader2, RefreshCw, ServerOff } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
+
+import { BrandLogo } from '@/components/layout/BrandMark'
 
 export function Spinner({ className = '' }: { className?: string }) {
   return <Loader2 className={`animate-spin text-accent ${className}`} size={20} aria-label="Cargando" />
@@ -81,9 +83,7 @@ export function ServiceUnavailable({ onRetry }: { onRetry?: () => void }) {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-base px-4 py-10">
       <div className="w-full max-w-md text-center">
-        <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-lg border border-line bg-accent-deep/25 text-accent-strong">
-          <TreePine size={30} strokeWidth={1.5} />
-        </span>
+        <BrandLogo className="mx-auto mb-4 size-16" />
         <h1 className="font-display text-xl font-bold uppercase tracking-[0.08em] text-ink">
           Northland community
         </h1>

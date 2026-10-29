@@ -39,17 +39,17 @@
   --color-cream-400: #b0a078;
   --color-cream-500: #90835f;
 
-  /* — Paleta: oliva (acento principal) — */
-  --color-olive-300: #bcc98d;
-  --color-olive-400: #9dae6b;
-  --color-olive-500: #809151;
-  --color-olive-600: #66743f;
+  /* — Paleta: verde bosque del badge (acento principal) — */
+  --color-olive-300: #b9c98f;
+  --color-olive-400: #96ad6c;
+  --color-olive-500: #79915a;
+  --color-olive-600: #5d7547;
 
-  /* — Paleta: ámbar (acento cálido, uso discreto) — */
-  --color-brand-300: #ecbd7d;
-  --color-brand-400: #dfa254;
-  --color-brand-500: #cd8a37;
-  --color-brand-600: #a86f2b;
+  /* — Paleta: dorado del sol / pergamino (acento cálido) — */
+  --color-brand-300: #ecc07e;
+  --color-brand-400: #d9a648;
+  --color-brand-500: #c08a33;
+  --color-brand-600: #9c6f29;
 
   /* — Paleta: óxido (errores / peligro) — */
   --color-rust-300: #d99682;

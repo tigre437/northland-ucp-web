@@ -1,10 +1,11 @@
-import { Shield, TreePine } from 'lucide-react'
+import { Shield } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Navigate, useLocation } from 'react-router-dom'
 
 import { api, ApiError } from '@/api'
 import { isDemo } from '@/config/env'
 import { useMe } from '@/hooks/api'
+import { BrandLogo } from '@/components/layout/BrandMark'
 import { PageLoader, ServiceUnavailable } from '@/components/ui/feedback'
 
 export function LoginPage() {
@@ -27,9 +28,7 @@ export function LoginPage() {
     <div className="flex min-h-dvh items-center justify-center bg-base px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <span className="mb-4 flex size-14 items-center justify-center rounded-lg border border-line bg-accent-deep/25 text-accent-strong">
-            <TreePine size={30} strokeWidth={1.5} />
-          </span>
+          <BrandLogo className="mb-4 size-20 shadow-lg" />
           <h1 className="font-display text-xl font-bold uppercase tracking-[0.08em] text-ink">
             Northland community
           </h1>
